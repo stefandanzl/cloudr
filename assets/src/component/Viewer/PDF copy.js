@@ -1,0 +1,255 @@
+import React, { useCallback, useState, useEffect, useRef } from "react";
+// import { Document, Page, pdfjs } from "react-pdf";
+// import { Paper } from "@material-ui/core";
+import { makeStyles } from "@material-ui/core/styles";
+import { useLocation, useParams, useRouteMatch } from "react-router";
+import { getBaseURL } from "../../middleware/Api";
+import { useDispatch } from "react-redux";
+import pathHelper from "../../utils/page";
+// import TextLoading from "../Placeholder/TextLoading";
+import { toggleSnackbar } from "../../redux/explorer";
+import UseFileSubTitle from "../../hooks/fileSubtitle";
+// import { useTranslation } from "react-i18next";
+// import PdfViewerComponent from "./PdfViewerComponent";
+import SaveButton from "../Dial/Save";
+import API from "../../middleware/Api";
+
+const useStyles = makeStyles((theme) => ({
+    layout: {
+        marginTop: 0,
+        marginLeft: 0,
+        marginRight: 0,
+        marginBottom: 0,
+        // overflow: "hidden",
+        // width: "100%",
+        // height: "100vh"
+    },
+    "@global": {
+        canvas: {
+            // width: "100% !important",
+            // height: "auto !important",
+            borderRadius: theme.shape.borderRadius,
+        },
+        ".overflow-guard": {
+            borderRadius: "0 0 12px 12px!important",
+        },
+    },
+    paper: {
+        marginBottom: theme.spacing(3),
+    },
+}));
+
+function useQuery() {
+    return new URLSearchParams(useLocation().search);
+}
+
+export default function PDFViewer() {
+    const containerRef = useRef(null);
+    let instanceRef; // = useRef(null);
+    //  idRef // = useRef(null);
+
+    // const { t } = useTranslation();
+    const math = useRouteMatch();
+    const location = useLocation();
+    const query = useQuery();
+    const { id } = useParams();
+    UseFileSubTitle(query, math, location);
+
+    const $vm = React.createRef();
+    const [content, setContent] = useState("");
+    const [status, setStatus] = useState("");
+    const [loading, setLoading] = useState(true);
+
+    let instancer;
+    const [pdfInstance, setPdfInstance] = useState(null);
+    const [idRef, setIdRef] = useState(null);
+
+
+    // const cdnBase = "https://cdn.danzl.it/pspdfkit-2023.4.5/"
+
+    // const [pageNumber, setPageNumber] = useState(1);
+
+    const dispatch = useDispatch();
+    const ToggleSnackbar = useCallback(
+        (vertical, horizontal, msg, color) =>
+            dispatch(toggleSnackbar(vertical, horizontal, msg, color)),
+        [dispatch]
+    );
+
+
+
+    const save = async () => {
+        try {
+            if (!pdfInstance) {
+                // Handle the case where pdfInstance is not available yet
+                console.error("PDF instance not available.");
+                return;
+            }
+        
+
+            // const arrayBuffer = await pdfInstance.exportPDF();
+            const arrayBuffer = await pdfInstance.exportPDF();
+            const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+
+            API.put("/file/update/" + query.get("id"), blob)
+                .then(() => {
+                    console.log("saved successfully!");
+                    setStatus("success");
+                    setTimeout(() => setStatus(""), 2000);
+                })
+                .catch((error) => {
+                    console.log("saved failed!");
+                    setStatus("");
+                    ToggleSnackbar("top", "right", error.message, "error");
+                });
+        } catch (error) {
+            console.error("Error exporting PDF:", error);
+        }
+    };
+
+    useEffect(() => {
+        const container = containerRef.current;
+        let PSPDFKit;
+        
+        (async function () {
+            // PSPDFKit = await import(cdnBase+'pspdfkit.js');
+
+            PSPDFKit = await import("pspdfkit");
+            const annotationPresets = PSPDFKit.defaultAnnotationPresets;
+            annotationPresets.highlighter.lineWidth = 12;
+
+            const toolbarItems = PSPDFKit.defaultToolbarItems;
+
+            const allowedTypes = ["sidebar-thumbnails", "highlighter","ink-eraser",];
+            toolbarItems = toolbarItems.filter(item => allowedTypes.includes(item.type));
+
+            toolbarItems.push({
+                title: "gelb",
+                id: "gelb",
+                type: "highlighter",
+                dropdownGroup: "gelb",
+                // preset: "high2"
+            });
+            // toolbarItems.push({
+            //     type: "custom",
+            //     id: "save-button",
+            //     title: "Save",
+            //     onPress: () => {
+            //       save(instance);
+            //     }
+            //   });
+            const document =
+                getBaseURL() +
+                (pathHelper.isSharePage(location.pathname)
+                    ? "/share/preview/" +
+                      id +
+                      (query.get("share_path") !== ""
+                          ? "?path=" +
+                            encodeURIComponent(query.get("share_path"))
+                          : "")
+                    : "/file/preview/" + query.get("id"));
+
+     
+
+            // })
+
+            const loadPdf = async () => {
+                try {
+                    PSPDFKit.unload(container);
+                }catch{
+                    console.log("no instance")
+                }
+                
+                
+                try {
+                    const instance = await PSPDFKit.load({
+                        container,
+                        document,
+                        baseUrl: `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`,
+                        // baseUrl: cdnBase,
+                        annotationPresets,
+                        toolbarItems,
+                        theme: PSPDFKit.Theme.DARK,
+                        toolbarPlacement: PSPDFKit.ToolbarPlacement.BOTTOM,
+                    })
+                    .then(async (instance) => {
+                        // instancer = instance;
+                        // instanceRef = instance;
+                        // idRef = query.get("id");
+                        setPdfInstance(instance);
+                        console.log("INSTANCEEE:",pdfInstance)
+
+                        instance.addEventListener(
+                            "document.saveStateChange",
+                            async (event) => {
+                                console.log(
+                                    `Save state changed: ${event.hasUnsavedChanges}`
+                                );
+                                //   console.log(props.id)
+                                // if (event.hasUnsavedChanges){save()}
+                            }
+                        );
+
+                        instance.addEventListener(
+                            "annotations.willChange",
+                            (event) => {
+                                const annotation = event.annotations.get(0);
+                                if (
+                                    event.reason ===
+                                    PSPDFKit.AnnotationsWillChangeReason
+                                        .DELETE_START
+                                ) {
+                                    console.log(
+                                        "Will open deletion confirmation dialog"
+                                    );
+                                    // We need to wrap the logic in a setTimeOut() because modal will get actually rendered on the next tick
+                                    setTimeout(function () {
+                                        // The button is in the context of the PSPDFKit iframe
+                                        const button =
+                                            instance.contentDocument.getElementsByClassName(
+                                                "PSPDFKit-Confirm-Dialog-Button-Confirm"
+                                            )[0];
+                                        button.click(); //.focus()
+                                    }, 0);
+                                }
+                            }
+                        );
+
+
+
+
+                    }).catch((error) => {
+                        console.error('PSPDFKit loading error:', error);
+                      });
+
+                    console.log("STRINGGGif",JSON.stringify(pdfInstance));
+                } catch (error) {
+                    console.error("Error loading PSPDFKit:", error);
+                }
+            };
+
+            loadPdf();
+        })();
+
+        return () => {
+            PSPDFKit && PSPDFKit.unload(container);
+            // if (pdfInstance) {
+            //   pdfInstance.destroy();
+            // }
+        };
+        // PSPDFKit && ;
+    }, []);
+
+    const classes = useStyles();
+    return (
+        <div className={classes.layout}>
+            <SaveButton onClick={save} status={status} />
+
+            <div
+                ref={containerRef}
+                style={{ width: "100%", height: "calc(100vh - 64px)" }}
+            />
+        </div>
+    );
+}
+// id="btn"
