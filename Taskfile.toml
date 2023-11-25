@@ -1,0 +1,38 @@
+# Taskfile.toml
+
+# Universal tasks
+[yarn_build]
+  cmds = ["yarn", "build"]
+
+[create_zip]
+  cmds = ["zip", "-r", "assets.zip", "assets/build"]
+
+# Local Development tasks
+[local_dev]
+
+  [local_dev.yarn_build]
+    cmds = ["task", "yarn_build"]
+
+  [local_dev.build_windows]
+    cmds = ["go", "build", "-o", "cloudr.exe"]
+    args = ["-ldflags", "-H=windowsgui"]
+    env = { GOOS = "windows" }
+
+  [local_dev.run_cloudr]
+    cmds = ["./cloudr.exe"]
+
+# Docker Container tasks
+[docker_container]
+
+  [docker_container.yarn_build]
+    cmds = ["task", "yarn_build"]
+
+  [docker_container.build_linux]
+    cmds = ["go", "build", "-o", "cloudr"]
+    env = { GOOS = "linux" }
+
+  [docker_container.build_docker]
+    cmds = ["docker", "build", ".", "-t",  "ghcr.io/stefandanzl/cloudr:latest"]
+
+  [docker_container.push_docker]
+    cmds = ["docker", "push", "ghcr.io/stefandanzl/cloudr:latest"]
