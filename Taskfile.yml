@@ -1,0 +1,50 @@
+version: '3'
+
+tasks:
+  # Universal tasks
+  yarn_build:
+    cmds:
+      - cd assets && yarn build
+
+  create_zip:
+    cmds:
+      - zip -r assets.zip assets/build
+
+  # Local Development tasks
+  local_dev:
+    yarn_build:
+      cmds:
+        - task yarn_build
+
+    build_windows:
+      cmds:
+        - go build -o cloudr.exe
+      # args:
+      #   - "-ldflags"
+      #   - "-H=windowsgui"
+      env:
+        GOOS: windows
+
+    run_cloudr:
+      cmds:
+        - ./cloudr.exe
+
+  # Docker Container tasks
+  docker_container:
+    yarn_build:
+      cmds:
+        - task yarn_build
+
+    build_linux:
+      cmds:
+        - go build -o cloudr
+      env:
+        GOOS: linux
+
+    build_docker:
+      cmds:
+        - docker build . -t ghcr.io/stefandanzl/cloudr:latest
+
+    push_docker:
+      cmds:
+        - docker push ghcr.io/stefandanzl/cloudr:latest
