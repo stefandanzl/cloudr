@@ -9,6 +9,7 @@ cloudr
 *.bin
 /release/
 assets.zip
+dev
 
 # Test binary, build with `go test -c`
 *.test

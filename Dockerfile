@@ -1,7 +1,7 @@
 FROM alpine:latest
 
 WORKDIR /cloudr
-COPY cloudr ./cloudr
+COPY dev/cloudr ./cloudr
 
 RUN apk update \
     && apk add --no-cache tzdata \
