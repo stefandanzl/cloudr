@@ -8,7 +8,7 @@ cloudr
 *.db
 *.bin
 /release/
-assets.zip
+# assets.zip
 dev
 
 # Test binary, build with `go test -c`

@@ -1,6 +1,19 @@
 version: '3'
 
 tasks:
+
+  yarn_install:
+    dir: assets
+    cmds:
+      - yarn install
+
+  go_mod_tidy:
+    cmds:
+      - go mod tidy
+
+  setup:
+    deps: [yarn_install, go_mod_tidy]
+
   # Universal tasks
   yarn_build:
     dir: assets
@@ -27,6 +40,14 @@ tasks:
     cmds:
       - ./cloudr
 
+  go_run:
+    cmds:
+      - go run .
+
+  open_firefox:
+    cmds:
+      - firefox --private-window http://localhost:5212
+
   # Docker Container tasks
   docker_container:
     cmds:
@@ -49,6 +70,13 @@ tasks:
   
   # Local Development tasks
   dev:
+    cmds:
+      - task: yarn_build
+      - task: create_zip
+      - task: go_run
+
+
+  build:
     cmds:
       - task: yarn_build
       - task: create_zip
