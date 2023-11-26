@@ -86,7 +86,7 @@ export default function PDFViewer() {
                 console.error("PDF instance not available.");
                 return;
             }
-        
+
 
             // const arrayBuffer = await pdfInstance.exportPDF();
             const arrayBuffer = await pdfInstance.exportPDF();
@@ -111,7 +111,7 @@ export default function PDFViewer() {
     useEffect(() => {
         const container = containerRef.current;
         let PSPDFKit;
-        
+
         (async function () {
             // PSPDFKit = await import(cdnBase+'pspdfkit.js');
 
@@ -120,124 +120,129 @@ export default function PDFViewer() {
             annotationPresets.highlighter.lineWidth = 12;
             annotationPresets.ink.lineWidth = 1;
 
+            const allowedTypes = ["sidebar-thumbnails", "sidebar-document-outline", "sidebar-annotations", "sidebar-bookmarks"];
+
             let toolbarItems = PSPDFKit.defaultToolbarItems;
 
-            const allowedTypes = ["sidebar-thumbnails","sidebar-document-outline","sidebar-annotations","sidebar-bookmarks"];
-            
-            toolbarItems = toolbarItems.filter(item => allowedTypes.includes(item.type));
-        
+            toolbarItems = toolbarItems
+                .filter(item => allowedTypes.includes(item.type))
+                .map(item => ({ ...item })); // Create a new array with the filtered items
+
+            // Now toolbarItems is a new array with the desired items
+
+
             toolbarItems.push(
                 {
                     type: "document-editor",
                     dropdownGroup: "doc",
-                },{
-                    type: "document-crop",
-                    dropdownGroup: "doc",
-                },{
-                    type: "export-pdf",
-                    dropdownGroup: "doc",
-                },{
-                    type: "print",
-                    dropdownGroup: "doc",
-                },{
-                    type: "zoom-out",
-                    dropdownGroup: "zoom",
-                },{
-                    type: "zoom-in",
-                    dropdownGroup: "zoom",
-                },{
-                    type: "zoom-mode",
-                    dropdownGroup: "zoom",
-                },{
-                    type: "search",
-                    dropdownGroup: "zoom",
-                },{
-                    type: "spacer"
-                },{
-                    type: "highlighter",
-                    title: "gelb",
-                    id: "gelb",
-                    dropdownGroup: "gelb",
-                },{
-                    type: "ink",
-                    dropdownGroup: "pen",
-                },{
-                    type: "ink-eraser",
-                    dropdownGroup: "rubber",
-                },{
-                    type: "text-highlighter",
-                    dropdownGroup: "hightext",
-                    selected: true,
-                },{
-                    type: "callout",
-                    dropdownGroup: "add",
-                },{
-                    type: "note",
-                    dropdownGroup: "add",
-                },{
-                    type: "text",
-                    dropdownGroup: "add",
-                },{
-                    type: "link",
-                    dropdownGroup: "add",
-                },{
-                    type: "image",
-                    dropdownGroup: "add",
-                },{
-                    type: "stamp",
-                    dropdownGroup: "add",
-                },{
-                    type: "line",
-                    dropdownGroup: "line",
-                    //selected: true,
-                },{
-                    type: "arrow",
-                    dropdownGroup: "line",
-                    //selected: true,
-                },{
-                    type: "rectangle",
-                    dropdownGroup: "line",
-                },{
-                    type: "polygon",
-                    dropdownGroup: "line",
-                },{
-                    type: "multi-annotations-selection",
-                    dropdownGroup: "multi",
-                },{
-                    type: "spacer"
-                },{
-                    type: "highlighter",
-                    dropdownGroup: "h1",
-                },{
-                    type: "pan",
-                    dropdownGroup: "pan2",
-                }
-        
-                );
-            
+                }, {
+                type: "document-crop",
+                dropdownGroup: "doc",
+            }, {
+                type: "export-pdf",
+                dropdownGroup: "doc",
+            }, {
+                type: "print",
+                dropdownGroup: "doc",
+            }, {
+                type: "zoom-out",
+                dropdownGroup: "zoom",
+            }, {
+                type: "zoom-in",
+                dropdownGroup: "zoom",
+            }, {
+                type: "zoom-mode",
+                dropdownGroup: "zoom",
+            }, {
+                type: "search",
+                dropdownGroup: "zoom",
+            }, {
+                type: "spacer"
+            }, {
+                type: "highlighter",
+                title: "gelb",
+                id: "gelb",
+                dropdownGroup: "gelb",
+            }, {
+                type: "ink",
+                dropdownGroup: "pen",
+            }, {
+                type: "ink-eraser",
+                dropdownGroup: "rubber",
+            }, {
+                type: "text-highlighter",
+                dropdownGroup: "hightext",
+                selected: true,
+            }, {
+                type: "callout",
+                dropdownGroup: "add",
+            }, {
+                type: "note",
+                dropdownGroup: "add",
+            }, {
+                type: "text",
+                dropdownGroup: "add",
+            }, {
+                type: "link",
+                dropdownGroup: "add",
+            }, {
+                type: "image",
+                dropdownGroup: "add",
+            }, {
+                type: "stamp",
+                dropdownGroup: "add",
+            }, {
+                type: "line",
+                dropdownGroup: "line",
+                //selected: true,
+            }, {
+                type: "arrow",
+                dropdownGroup: "line",
+                //selected: true,
+            }, {
+                type: "rectangle",
+                dropdownGroup: "line",
+            }, {
+                type: "polygon",
+                dropdownGroup: "line",
+            }, {
+                type: "multi-annotations-selection",
+                dropdownGroup: "multi",
+            }, {
+                type: "spacer"
+            }, {
+                type: "highlighter",
+                dropdownGroup: "h1",
+            }, {
+                type: "pan",
+                dropdownGroup: "pan2",
+            }
+
+            );
+
             const document =
                 getBaseURL() +
                 (pathHelper.isSharePage(location.pathname)
                     ? "/share/preview/" +
-                      id +
-                      (query.get("share_path") !== ""
-                          ? "?path=" +
-                            encodeURIComponent(query.get("share_path"))
-                          : "")
+                    id +
+                    (query.get("share_path") !== ""
+                        ? "?path=" +
+                        encodeURIComponent(query.get("share_path"))
+                        : "")
                     : "/file/preview/" + query.get("id"));
 
-     
+
 
             // })
 
             const loadPdf = async () => {
                 try {
                     PSPDFKit.unload(container);
-                }catch{
+                } catch {
                     console.log("no instance")
                 }
-                
-                
+
+
                 try {
                     const instance = await PSPDFKit.load({
                         container,
@@ -249,57 +254,57 @@ export default function PDFViewer() {
                         theme: PSPDFKit.Theme.DARK,
                         toolbarPlacement: PSPDFKit.ToolbarPlacement.BOTTOM,
                     })
-                    .then(async (instance) => {
-                        // instancer = instance;
-                        // instanceRef = instance;
-                        // idRef = query.get("id");
-                        setPdfInstance(instance);
-                        console.log("INSTANCEEE:",pdfInstance)
+                        .then(async (instance) => {
+                            // instancer = instance;
+                            // instanceRef = instance;
+                            // idRef = query.get("id");
+                            setPdfInstance(instance);
+                            console.log("INSTANCEEE:", pdfInstance)
 
-                        instance.addEventListener(
-                            "document.saveStateChange",
-                            async (event) => {
-                                console.log(
-                                    `Save state changed: ${event.hasUnsavedChanges}`
-                                );
-                                //   console.log(props.id)
-                                // if (event.hasUnsavedChanges){save()}
-                            }
-                        );
-
-                        instance.addEventListener(
-                            "annotations.willChange",
-                            (event) => {
-                                const annotation = event.annotations.get(0);
-                                if (
-                                    event.reason ===
-                                    PSPDFKit.AnnotationsWillChangeReason
-                                        .DELETE_START
-                                ) {
+                            instance.addEventListener(
+                                "document.saveStateChange",
+                                async (event) => {
                                     console.log(
-                                        "Will open deletion confirmation dialog"
+                                        `Save state changed: ${event.hasUnsavedChanges}`
                                     );
-                                    // We need to wrap the logic in a setTimeOut() because modal will get actually rendered on the next tick
-                                    setTimeout(function () {
-                                        // The button is in the context of the PSPDFKit iframe
-                                        const button =
-                                            instance.contentDocument.getElementsByClassName(
-                                                "PSPDFKit-Confirm-Dialog-Button-Confirm"
-                                            )[0];
-                                        button.click(); //.focus()
-                                    }, 0);
+                                    //   console.log(props.id)
+                                    // if (event.hasUnsavedChanges){save()}
                                 }
-                            }
-                        );
+                            );
+
+                            instance.addEventListener(
+                                "annotations.willChange",
+                                (event) => {
+                                    const annotation = event.annotations.get(0);
+                                    if (
+                                        event.reason ===
+                                        PSPDFKit.AnnotationsWillChangeReason
+                                            .DELETE_START
+                                    ) {
+                                        console.log(
+                                            "Will open deletion confirmation dialog"
+                                        );
+                                        // We need to wrap the logic in a setTimeOut() because modal will get actually rendered on the next tick
+                                        setTimeout(function () {
+                                            // The button is in the context of the PSPDFKit iframe
+                                            const button =
+                                                instance.contentDocument.getElementsByClassName(
+                                                    "PSPDFKit-Confirm-Dialog-Button-Confirm"
+                                                )[0];
+                                            button.click(); //.focus()
+                                        }, 0);
+                                    }
+                                }
+                            );
 
 
 
 
-                    }).catch((error) => {
-                        console.error('PSPDFKit loading error:', error);
-                      });
+                        }).catch((error) => {
+                            console.error('PSPDFKit loading error:', error);
+                        });
 
-                    console.log("STRINGGGif",JSON.stringify(pdfInstance));
+                    console.log("STRINGGGif", JSON.stringify(pdfInstance));
                 } catch (error) {
                     console.error("Error loading PSPDFKit:", error);
                 }
