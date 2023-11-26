@@ -1063,7 +1063,7 @@ class UserSettingCompoment extends Component {
                         className={classes.sectionTitle}
                         variant="subtitle2"
                     >
-                        {t("setting.aboutCloudreve")}
+                        {t("setting.aboutCloudr")}
                     </Typography>
                     <Paper>
                         <List className={classes.desenList}>
@@ -1071,7 +1071,7 @@ class UserSettingCompoment extends Component {
                                 button
                                 onClick={() =>
                                     window.open(
-                                        "https://github.com/cloudreve/cloudreve"
+                                        "https://github.com/cloudr/cloudr"
                                     )
                                 }
                             >
@@ -1092,7 +1092,7 @@ class UserSettingCompoment extends Component {
                             <ListItem
                                 button
                                 onClick={() =>
-                                    window.open("https://cloudreve.org")
+                                    window.open("https://cloudr.org")
                                 }
                             >
                                 <ListItemIcon className={classes.iconFix}>

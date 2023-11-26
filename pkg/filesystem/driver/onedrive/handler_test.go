@@ -33,7 +33,7 @@ func TestDriver_Token(t *testing.T) {
 
 	// 分片上传 失败
 	{
-		cache.Set("setting_siteURL", "http://test.cloudreve.org", 0)
+		cache.Set("setting_siteURL", "http://test.cloudr.org", 0)
 		handler.Client, _ = NewClient(&model.Policy{})
 		handler.Client.Credential.ExpiresIn = time.Now().Add(time.Duration(100) * time.Hour).Unix()
 		clientMock := ClientMock{}
@@ -58,7 +58,7 @@ func TestDriver_Token(t *testing.T) {
 
 	// 分片上传 成功
 	{
-		cache.Set("setting_siteURL", "http://test.cloudreve.org", 0)
+		cache.Set("setting_siteURL", "http://test.cloudr.org", 0)
 		cache.Set("setting_onedrive_monitor_timeout", "600", 0)
 		cache.Set("setting_onedrive_callback_check", "20", 0)
 		handler.Client, _ = NewClient(&model.Policy{})

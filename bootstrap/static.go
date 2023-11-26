@@ -78,7 +78,7 @@ func InitStatic(statics fs.FS) {
 		return
 	}
 
-	staticName := "cloudreve-frontend"
+	staticName := "cloudr-frontend"
 	if conf.IsPro == "true" {
 		staticName += "-pro"
 	}

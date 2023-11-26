@@ -42,7 +42,7 @@ func Session(secret string) gin.HandlerFunc {
 		Secure:   conf.CORSConfig.Secure,
 	})
 
-	return sessions.Sessions("cloudreve-session", Store)
+	return sessions.Sessions("cloudr-session", Store)
 }
 
 // CSRFInit 初始化CSRF标记

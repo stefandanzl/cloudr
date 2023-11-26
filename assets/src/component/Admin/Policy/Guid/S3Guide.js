@@ -1119,7 +1119,7 @@ export default function S3Guide(props) {
                                     onClick={() => createCORS()}
                                     classes={{ label: classes.viewButtonLabel }}
                                 >
-                                    {t("letCloudreveHelpMe")}
+                                    {t("letCloudrHelpMe")}
                                 </Button>
                             </div>
                         </div>

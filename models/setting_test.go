@@ -33,22 +33,22 @@ func TestGetSettingByType(t *testing.T) {
 
 	//找到设置时
 	rows := sqlmock.NewRows([]string{"name", "value", "type"}).
-		AddRow("siteName", "Cloudreve", "basic").
+		AddRow("siteName", "Cloudr", "basic").
 		AddRow("siteDes", "Something wonderful", "basic")
 	mock.ExpectQuery("^SELECT \\* FROM `(.+)` WHERE `(.+)`\\.`deleted_at` IS NULL AND(.+)$").WillReturnRows(rows)
 	settings := GetSettingByType([]string{"basic"})
 	asserts.Equal(map[string]string{
-		"siteName": "Cloudreve",
+		"siteName": "Cloudr",
 		"siteDes":  "Something wonderful",
 	}, settings)
 
 	rows = sqlmock.NewRows([]string{"name", "value", "type"}).
-		AddRow("siteName", "Cloudreve", "basic").
+		AddRow("siteName", "Cloudr", "basic").
 		AddRow("siteDes", "Something wonderful", "basic2")
 	mock.ExpectQuery("^SELECT \\* FROM `(.+)` WHERE `(.+)`\\.`deleted_at` IS NULL AND(.+)$").WillReturnRows(rows)
 	settings = GetSettingByType([]string{"basic", "basic2"})
 	asserts.Equal(map[string]string{
-		"siteName": "Cloudreve",
+		"siteName": "Cloudr",
 		"siteDes":  "Something wonderful",
 	}, settings)
 
@@ -74,23 +74,23 @@ func TestGetSettingByNames(t *testing.T) {
 
 	//找到设置时
 	rows := sqlmock.NewRows([]string{"name", "value", "type"}).
-		AddRow("siteName", "Cloudreve", "basic").
+		AddRow("siteName", "Cloudr", "basic").
 		AddRow("siteDes", "Something wonderful", "basic")
 	mock.ExpectQuery("^SELECT \\* FROM `(.+)` WHERE `(.+)`\\.`deleted_at` IS NULL AND(.+)$").WillReturnRows(rows)
 	settings := GetSettingByNames("siteName", "siteDes")
 	asserts.Equal(map[string]string{
-		"siteName": "Cloudreve",
+		"siteName": "Cloudr",
 		"siteDes":  "Something wonderful",
 	}, settings)
 	asserts.NoError(mock.ExpectationsWereMet())
 
 	//找到其中一个设置时
 	rows = sqlmock.NewRows([]string{"name", "value", "type"}).
-		AddRow("siteName2", "Cloudreve", "basic")
+		AddRow("siteName2", "Cloudr", "basic")
 	mock.ExpectQuery("^SELECT \\* FROM `(.+)` WHERE `(.+)`\\.`deleted_at` IS NULL AND(.+)$").WillReturnRows(rows)
 	settings = GetSettingByNames("siteName2", "siteDes2333")
 	asserts.Equal(map[string]string{
-		"siteName2": "Cloudreve",
+		"siteName2": "Cloudr",
 	}, settings)
 	asserts.NoError(mock.ExpectationsWereMet())
 
@@ -103,11 +103,11 @@ func TestGetSettingByNames(t *testing.T) {
 
 	// 一个设置命中缓存
 	mock.ExpectQuery("^SELECT \\* FROM `(.+)` WHERE `(.+)`\\.`deleted_at` IS NULL AND(.+)$").WithArgs("siteDes2").WillReturnRows(sqlmock.NewRows([]string{"name", "value", "type"}).
-		AddRow("siteDes2", "Cloudreve2", "basic"))
+		AddRow("siteDes2", "Cloudr2", "basic"))
 	settings = GetSettingByNames("siteName", "siteDes2")
 	asserts.Equal(map[string]string{
-		"siteName": "Cloudreve",
-		"siteDes2": "Cloudreve2",
+		"siteName": "Cloudr",
+		"siteDes2": "Cloudr2",
 	}, settings)
 	asserts.NoError(mock.ExpectationsWereMet())
 
@@ -120,16 +120,16 @@ func TestGetSettingByName(t *testing.T) {
 
 	//找到设置时
 	rows := sqlmock.NewRows([]string{"name", "value", "type"}).
-		AddRow("siteName", "Cloudreve", "basic")
+		AddRow("siteName", "Cloudr", "basic")
 	mock.ExpectQuery("^SELECT \\* FROM `(.+)` WHERE `(.+)`\\.`deleted_at` IS NULL AND(.+)$").WillReturnRows(rows)
 
 	siteName := GetSettingByName("siteName")
-	asserts.Equal("Cloudreve", siteName)
+	asserts.Equal("Cloudr", siteName)
 	asserts.NoError(mock.ExpectationsWereMet())
 
 	// 第二次查询应返回缓存内容
 	siteNameCache := GetSettingByName("siteName")
-	asserts.Equal("Cloudreve", siteNameCache)
+	asserts.Equal("Cloudr", siteNameCache)
 	asserts.NoError(mock.ExpectationsWereMet())
 
 	// 找不到设置
@@ -159,10 +159,10 @@ func TestGetSiteURL(t *testing.T) {
 		err := cache.Deletes([]string{"siteURL"}, "setting_")
 		asserts.NoError(err)
 
-		mock.ExpectQuery("SELECT(.+)").WithArgs("siteURL").WillReturnRows(sqlmock.NewRows([]string{"id", "value"}).AddRow(1, "https://drive.cloudreve.org"))
+		mock.ExpectQuery("SELECT(.+)").WithArgs("siteURL").WillReturnRows(sqlmock.NewRows([]string{"id", "value"}).AddRow(1, "https://drive.cloudr.org"))
 		siteURL := GetSiteURL()
 		asserts.NoError(mock.ExpectationsWereMet())
-		asserts.Equal("https://drive.cloudreve.org", siteURL.String())
+		asserts.Equal("https://drive.cloudr.org", siteURL.String())
 	}
 
 	// 失败 返回默认值
@@ -173,7 +173,7 @@ func TestGetSiteURL(t *testing.T) {
 		mock.ExpectQuery("SELECT(.+)").WithArgs("siteURL").WillReturnRows(sqlmock.NewRows([]string{"id", "value"}).AddRow(1, ":][\\/\\]sdf"))
 		siteURL := GetSiteURL()
 		asserts.NoError(mock.ExpectationsWereMet())
-		asserts.Equal("https://cloudreve.org", siteURL.String())
+		asserts.Equal("https://cloudr.org", siteURL.String())
 	}
 }
 

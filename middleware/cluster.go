@@ -13,7 +13,7 @@ func MasterMetadata() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Set("MasterSiteID", c.GetHeader(auth.CrHeaderPrefix+"Site-Id"))
 		c.Set("MasterSiteURL", c.GetHeader(auth.CrHeaderPrefix+"Site-Url"))
-		c.Set("MasterVersion", c.GetHeader(auth.CrHeaderPrefix+"Cloudreve-Version"))
+		c.Set("MasterVersion", c.GetHeader(auth.CrHeaderPrefix+"Cloudr-Version"))
 		c.Next()
 	}
 }

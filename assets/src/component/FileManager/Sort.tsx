@@ -2,7 +2,7 @@ import React, { MouseEventHandler, useState } from "react";
 import { IconButton, Menu, MenuItem } from "@material-ui/core";
 import TextTotateVerticalIcon from "@material-ui/icons/TextRotateVertical";
 import { useTranslation } from "react-i18next";
-import { CloudreveFile, SortMethod } from "./../../types/index";
+import { CloudrFile, SortMethod } from "./../../types/index";
 
 const SORT_OPTIONS: {
     value: SortMethod;
@@ -67,39 +67,39 @@ export default function Sort({ value, onChange, isSmall, inherit, className }) {
 }
 
 
-type SortFunc = (a: CloudreveFile, b: CloudreveFile) => number;
+type SortFunc = (a: CloudrFile, b: CloudrFile) => number;
 
 export const sortMethodFuncs: Record<SortMethod, SortFunc> = {
-    sizePos: (a: CloudreveFile, b: CloudreveFile) => {
+    sizePos: (a: CloudrFile, b: CloudrFile) => {
         return a.size - b.size;
     },
-    sizeRes: (a: CloudreveFile, b: CloudreveFile) => {
+    sizeRes: (a: CloudrFile, b: CloudrFile) => {
         return b.size - a.size;
     },
-    namePos: (a: CloudreveFile, b: CloudreveFile) => {
+    namePos: (a: CloudrFile, b: CloudrFile) => {
         return a.name.localeCompare(
             b.name,
             navigator.languages[0] || navigator.language,
             { numeric: true, ignorePunctuation: true }
         );
     },
-    nameRev: (a: CloudreveFile, b: CloudreveFile) => {
+    nameRev: (a: CloudrFile, b: CloudrFile) => {
         return b.name.localeCompare(
             a.name,
             navigator.languages[0] || navigator.language,
             { numeric: true, ignorePunctuation: true }
         );
     },
-    timePos: (a: CloudreveFile, b: CloudreveFile) => {
+    timePos: (a: CloudrFile, b: CloudrFile) => {
         return Date.parse(a.create_date) - Date.parse(b.create_date);
     },
-    timeRev: (a: CloudreveFile, b: CloudreveFile) => {
+    timeRev: (a: CloudrFile, b: CloudrFile) => {
         return Date.parse(b.create_date) - Date.parse(a.create_date);
     },
-    modifyTimePos: (a: CloudreveFile, b: CloudreveFile) => {
+    modifyTimePos: (a: CloudrFile, b: CloudrFile) => {
         return Date.parse(a.date) - Date.parse(b.date);
     },
-    modifyTimeRev: (a: CloudreveFile, b: CloudreveFile) => {
+    modifyTimeRev: (a: CloudrFile, b: CloudrFile) => {
         return Date.parse(b.date) - Date.parse(a.date);
     },
 };

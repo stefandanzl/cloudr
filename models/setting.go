@@ -95,7 +95,7 @@ func GetSettingByType(types []string) map[string]string {
 func GetSiteURL() *url.URL {
 	base, err := url.Parse(GetSettingByName("siteURL"))
 	if err != nil {
-		base, _ = url.Parse("https://cloudreve.org")
+		base, _ = url.Parse("https://cloudr.org")
 	}
 	return base
 }

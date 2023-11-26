@@ -64,7 +64,7 @@ func TestHTTPClient_Request(t *testing.T) {
 			"/test",
 			strings.NewReader(""),
 			WithContentLength(0),
-			WithEndpoint("http://cloudreveisnotexist.com"),
+			WithEndpoint("http://cloudrisnotexist.com"),
 			WithTimeout(time.Duration(1)*time.Microsecond),
 			WithCredential(auth.HMACAuth{SecretKey: []byte("123")}, 10),
 			WithoutHeader([]string{"origin", "origin"}),
@@ -77,7 +77,7 @@ func TestHTTPClient_Request(t *testing.T) {
 	{
 		resp := client.Request(
 			"GET",
-			"http://cloudreveisnotexist.com",
+			"http://cloudrisnotexist.com",
 			strings.NewReader(""),
 			WithTimeout(time.Duration(1)*time.Microsecond),
 			WithCredential(auth.HMACAuth{SecretKey: []byte("123")}, 10),

@@ -24,7 +24,7 @@ func TestMasterMetadata(t *testing.T) {
 	c.Request.Header = map[string][]string{
 		"X-Cr-Site-Id":           {"expectedSiteID"},
 		"X-Cr-Site-Url":          {"expectedSiteURL"},
-		"X-Cr-Cloudreve-Version": {"expectedMasterVersion"},
+		"X-Cr-Cloudr-Version": {"expectedMasterVersion"},
 	}
 	masterMetaDataFunc(c)
 	siteID, _ := c.Get("MasterSiteID")

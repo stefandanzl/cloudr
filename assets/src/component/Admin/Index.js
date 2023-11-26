@@ -64,7 +64,7 @@ const useStyles = makeStyles((theme) => ({
     title: {
         marginLeft: 16,
     },
-    cloudreve: {
+    cloudr: {
         fontSize: 25,
         color: theme.palette.text.secondary,
     },
@@ -325,13 +325,13 @@ export default function Index() {
                 <Paper>
                     <div className={classes.logoContainer}>
                         <img
-                            alt="cloudreve"
+                            alt="cloudr"
                             className={classes.logo}
-                            src={"/static/img/cloudreve.svg"}
+                            src={"/static/img/cloudr.svg"}
                         />
                         <div className={classes.title}>
-                            <Typography className={classes.cloudreve}>
-                                Cloudreve
+                            <Typography className={classes.cloudr}>
+                                Cloudr
                             </Typography>
                             <Typography className={classes.version}>
                                 {version.backend}{" "}
@@ -347,7 +347,7 @@ export default function Index() {
                             <ListItem
                                 button
                                 onClick={() =>
-                                    window.open("https://cloudreve.org")
+                                    window.open("https://cloudr.org")
                                 }
                             >
                                 <ListItemIcon>
@@ -362,7 +362,7 @@ export default function Index() {
                                 button
                                 onClick={() =>
                                     window.open(
-                                        "https://github.com/cloudreve/cloudreve"
+                                        "https://github.com/cloudr/cloudr"
                                     )
                                 }
                             >
@@ -377,7 +377,7 @@ export default function Index() {
                             <ListItem
                                 button
                                 onClick={() =>
-                                    window.open("https://docs.cloudreve.org/")
+                                    window.open("https://docs.cloudr.org/")
                                 }
                             >
                                 <ListItemIcon>
@@ -423,7 +423,7 @@ export default function Index() {
                             <ListItem
                                 button
                                 onClick={() =>
-                                    window.open("https://cloudreve.org/pro")
+                                    window.open("https://cloudr.org/pro")
                                 }
                             >
                                 <ListItemIcon style={{ color: "#ff789d" }}>
@@ -449,7 +449,7 @@ export default function Index() {
                                         alignItems="flex-start"
                                         onClick={() =>
                                             window.open(
-                                                "https://forum.cloudreve.org/d/" +
+                                                "https://forum.cloudr.org/d/" +
                                                     v.id
                                             )
                                         }

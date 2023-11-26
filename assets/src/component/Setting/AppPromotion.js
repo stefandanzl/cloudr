@@ -138,7 +138,7 @@ export default function AppPromotion() {
                                     <Box
                                         component={"a"}
                                         href={
-                                            "https://apps.apple.com/us/app/cloudreve/id1619480823"
+                                            "https://apps.apple.com/us/app/cloudr/id1619480823"
                                         }
                                         target={"_blank"}
                                     >
@@ -189,7 +189,7 @@ export default function AppPromotion() {
                                 <Box
                                     component={"img"}
                                     src={
-                                        "https://cloudreve.org/imgs/ios/" +
+                                        "https://cloudr.org/imgs/ios/" +
                                         (theme.palette.type === "light"
                                             ? "main.png"
                                             : "main_dark.jpg")

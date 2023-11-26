@@ -227,7 +227,7 @@ func (service *FileIDService) CreateDocPreviewSession(ctx context.Context, c *gi
 		return serializer.Err(serializer.CodeNotSet, err.Error(), err)
 	}
 
-	// For newer version of Cloudreve - Local Policy
+	// For newer version of Cloudr - Local Policy
 	// When do not use a cdn, the downloadURL withouts hosts, like "/api/v3/file/download/xxx"
 	if strings.HasPrefix(downloadURL, "/") {
 		downloadURI, err := url.Parse(downloadURL)

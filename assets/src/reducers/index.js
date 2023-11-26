@@ -76,7 +76,7 @@ export const initState = {
 const defaultStatus = InitSiteConfig(initState);
 
 // TODO: 将cloureveApp切分成小的reducer
-const cloudreveApp = (state = defaultStatus, action) => {
+const cloudrApp = (state = defaultStatus, action) => {
     switch (action.type) {
         case "SET_NAVIGATOR":
             return doNavigate(action.path, state);
@@ -156,7 +156,7 @@ const cloudreveApp = (state = defaultStatus, action) => {
 export default (history) => (state, action) => {
     const { viewUpdate: viewUpdateState, explorer: explorerState } =
         state || {};
-    const appState = cloudreveApp(state, action);
+    const appState = cloudrApp(state, action);
     const combinedState = combineReducers({
         viewUpdate,
         explorer,

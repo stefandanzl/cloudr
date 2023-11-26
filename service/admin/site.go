@@ -45,7 +45,7 @@ type MailTestService struct {
 
 // Send 发送测试邮件
 func (service *MailTestService) Send() serializer.Response {
-	if err := email.Send(service.Email, "Cloudreve Email delivery test", "This is a test Email, to test Cloudreve Email delivery settings"); err != nil {
+	if err := email.Send(service.Email, "Cloudr Email delivery test", "This is a test Email, to test Cloudr Email delivery settings"); err != nil {
 		return serializer.Err(serializer.CodeFailedSendEmail, err.Error(), nil)
 	}
 	return serializer.Response{}

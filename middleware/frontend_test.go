@@ -89,10 +89,10 @@ func TestFrontendFileHandler(t *testing.T) {
 		c.Params = []gin.Param{}
 		c.Request, _ = http.NewRequest("GET", "/", nil)
 
-		cache.Set("setting_siteName", "cloudreve", 0)
-		cache.Set("setting_siteKeywords", "cloudreve", 0)
-		cache.Set("setting_siteScript", "cloudreve", 0)
-		cache.Set("setting_pwa_small_icon", "cloudreve", 0)
+		cache.Set("setting_siteName", "cloudr", 0)
+		cache.Set("setting_siteKeywords", "cloudr", 0)
+		cache.Set("setting_siteScript", "cloudr", 0)
+		cache.Set("setting_pwa_small_icon", "cloudr", 0)
 
 		TestFunc(c)
 		asserts.True(c.IsAborted())

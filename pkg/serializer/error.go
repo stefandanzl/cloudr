@@ -170,7 +170,7 @@ const (
 	CodeSaveOwnShare = 40059
 	// 从机无法向主机发送回调请求
 	CodeSlavePingMaster = 40060
-	// Cloudreve 版本不一致
+	// Cloudr 版本不一致
 	CodeVersionMismatch = 40061
 	// 积分不足
 	CodeInsufficientCredit = 40062

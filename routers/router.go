@@ -110,7 +110,7 @@ func InitCORS(router *gin.Engine) {
 
 	// slave模式下未启动跨域的警告
 	if conf.SystemConfig.Mode == "slave" {
-		util.Log().Warning("You are running Cloudreve as slave node, if you are using slave storage policy, please enable CORS feature in config file, otherwise file cannot be uploaded from Master site.")
+		util.Log().Warning("You are running Cloudr as slave node, if you are using slave storage policy, please enable CORS feature in config file, otherwise file cannot be uploaded from Master site.")
 	}
 }
 

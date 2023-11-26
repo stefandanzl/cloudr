@@ -16,7 +16,7 @@ func TestGetUserByID(t *testing.T) {
 	cache.Deletes([]string{"1"}, "policy_")
 	//找到用户时
 	userRows := sqlmock.NewRows([]string{"id", "deleted_at", "email", "options", "group_id"}).
-		AddRow(1, nil, "admin@cloudreve.org", "{}", 1)
+		AddRow(1, nil, "admin@cloudr.org", "{}", 1)
 	mock.ExpectQuery("^SELECT (.+)").WillReturnRows(userRows)
 
 	groupRows := sqlmock.NewRows([]string{"id", "name", "policies"}).
@@ -34,7 +34,7 @@ func TestGetUserByID(t *testing.T) {
 			ID:        1,
 			DeletedAt: nil,
 		},
-		Email:   "admin@cloudreve.org",
+		Email:   "admin@cloudr.org",
 		Options: "{}",
 		GroupID: 1,
 		Group: Group{
@@ -68,7 +68,7 @@ func TestGetActiveUserByID(t *testing.T) {
 	cache.Deletes([]string{"1"}, "policy_")
 	//找到用户时
 	userRows := sqlmock.NewRows([]string{"id", "deleted_at", "email", "options", "group_id"}).
-		AddRow(1, nil, "admin@cloudreve.org", "{}", 1)
+		AddRow(1, nil, "admin@cloudr.org", "{}", 1)
 	mock.ExpectQuery("^SELECT (.+)").WillReturnRows(userRows)
 
 	groupRows := sqlmock.NewRows([]string{"id", "name", "policies"}).
@@ -86,7 +86,7 @@ func TestGetActiveUserByID(t *testing.T) {
 			ID:        1,
 			DeletedAt: nil,
 		},
-		Email:   "admin@cloudreve.org",
+		Email:   "admin@cloudr.org",
 		Options: "{}",
 		GroupID: 1,
 		Group: Group{

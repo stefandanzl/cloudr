@@ -97,7 +97,7 @@ func TestClient_OAuthURL(t *testing.T) {
 
 	client := Client{
 		ClientID:  "client_id",
-		Redirect:  "http://cloudreve.org/callback",
+		Redirect:  "http://cloudr.org/callback",
 		Endpoints: &Endpoints{},
 	}
 	client.Endpoints.OAuthEndpoints = client.getOAuthEndpoint()

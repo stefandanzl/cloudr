@@ -9,18 +9,18 @@ services:
     volumes:
       - redis_data:/bitnami/redis/data
 
-  cloudreve:
-    container_name: cloudreve
-    image: cloudreve/cloudreve:latest
+  cloudr:
+    container_name: cloudr
+    image: cloudr/cloudr:latest
     restart: unless-stopped
     ports:
       - "5212:5212"
     volumes:
       - temp_data:/data
-      - ./cloudreve/uploads:/cloudreve/uploads
-      - ./cloudreve/conf.ini:/cloudreve/conf.ini
-      - ./cloudreve/cloudreve.db:/cloudreve/cloudreve.db
-      - ./cloudreve/avatar:/cloudreve/avatar
+      - ./cloudr/uploads:/cloudr/uploads
+      - ./cloudr/conf.ini:/cloudr/conf.ini
+      - ./cloudr/cloudr.db:/cloudr/cloudr.db
+      - ./cloudr/avatar:/cloudr/avatar
     depends_on:
       - aria2
 

@@ -73,9 +73,9 @@ func TestCaptcha(t *testing.T) {
 //			settingRows: sqlmock.NewRows([]string{"name", "value", "type"}).
 //				AddRow("login_captcha", "0", "login"),
 //			userRows: sqlmock.NewRows([]string{"email", "nick", "password", "options"}).
-//				AddRow("admin@cloudreve.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}"),
+//				AddRow("admin@cloudr.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}"),
 //			expected: serializer.BuildUserResponse(model.User{
-//				Email: "admin@cloudreve.org",
+//				Email: "admin@cloudr.org",
 //				Nick:  "admin",
 //				Policy: model.Policy{
 //					Type:              "local",
@@ -88,7 +88,7 @@ func TestCaptcha(t *testing.T) {
 //			settingRows: sqlmock.NewRows([]string{"name", "value", "type"}).
 //				AddRow("login_captcha", "1", "login"),
 //			userRows: sqlmock.NewRows([]string{"email", "nick", "password", "options"}).
-//				AddRow("admin@cloudreve.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}"),
+//				AddRow("admin@cloudr.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}"),
 //			expected: serializer.ParamErr("验证码错误", nil),
 //		},
 //		// 邮箱正确密码错误
@@ -96,12 +96,12 @@ func TestCaptcha(t *testing.T) {
 //			settingRows: sqlmock.NewRows([]string{"name", "value", "type"}).
 //				AddRow("login_captcha", "0", "login"),
 //			userRows: sqlmock.NewRows([]string{"email", "nick", "password", "options"}).
-//				AddRow("admin@cloudreve.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}"),
+//				AddRow("admin@cloudr.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}"),
 //			expected: serializer.Err(401, "用户邮箱或密码错误", nil),
 //		},
 //		//邮箱格式不正确
 //		{
-//			reqBody:  `{"userName":"admin@cloudreve","captchaCode":"captchaCode","Password":"admin123"}`,
+//			reqBody:  `{"userName":"admin@cloudr","captchaCode":"captchaCode","Password":"admin123"}`,
 //			expected: serializer.Err(40001, "邮箱格式不正确", errors.New("Key: 'UserLoginService.UserName' Error:Field validation for 'UserName' failed on the 'email' tag")),
 //		},
 //		// 用户被Ban
@@ -109,7 +109,7 @@ func TestCaptcha(t *testing.T) {
 //			settingRows: sqlmock.NewRows([]string{"name", "value", "type"}).
 //				AddRow("login_captcha", "0", "login"),
 //			userRows: sqlmock.NewRows([]string{"email", "nick", "password", "options", "status"}).
-//				AddRow("admin@cloudreve.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}", model.Baned),
+//				AddRow("admin@cloudr.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}", model.Baned),
 //			expected: serializer.Err(403, "该账号已被封禁", nil),
 //		},
 //		// 用户未激活
@@ -117,7 +117,7 @@ func TestCaptcha(t *testing.T) {
 //			settingRows: sqlmock.NewRows([]string{"name", "value", "type"}).
 //				AddRow("login_captcha", "0", "login"),
 //			userRows: sqlmock.NewRows([]string{"email", "nick", "password", "options", "status"}).
-//				AddRow("admin@cloudreve.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}", model.NotActivicated),
+//				AddRow("admin@cloudr.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}", model.NotActivicated),
 //			expected: serializer.Err(403, "该账号未激活", nil),
 //		},
 //	}
@@ -159,7 +159,7 @@ func TestCaptcha(t *testing.T) {
 //	w := httptest.NewRecorder()
 //
 //	mock.ExpectQuery("^SELECT (.+)").WillReturnRows(sqlmock.NewRows([]string{"email", "nick", "password", "options"}).
-//		AddRow("admin@cloudreve.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}"))
+//		AddRow("admin@cloudr.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}"))
 //	expectedUser, _ := model.GetUserByID(1)
 //
 //	testCases := []struct {
@@ -175,7 +175,7 @@ func TestCaptcha(t *testing.T) {
 //		// 登录正常
 //		{
 //			userRows: sqlmock.NewRows([]string{"email", "nick", "password", "options"}).
-//				AddRow("admin@cloudreve.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}"),
+//				AddRow("admin@cloudr.org", "admin", "CKLmDKa1C9SD64vU:76adadd4fd4bad86959155f6f7bc8993c94e7adf", "{}"),
 //			sessionMock: map[string]interface{}{"user_id": 1},
 //			expected:    serializer.BuildUserResponse(expectedUser),
 //		},
@@ -223,7 +223,7 @@ func TestSiteConfigRoute(t *testing.T) {
 	)
 	router.ServeHTTP(w, req)
 	asserts.Equal(200, w.Code)
-	asserts.Contains(w.Body.String(), "Cloudreve")
+	asserts.Contains(w.Body.String(), "Cloudr")
 
 	w.Body.Reset()
 

@@ -88,7 +88,7 @@ func WebDAVAuth() gin.HandlerFunc {
 
 		username, password, ok := c.Request.BasicAuth()
 		if !ok {
-			c.Writer.Header()["WWW-Authenticate"] = []string{`Basic realm="cloudreve"`}
+			c.Writer.Header()["WWW-Authenticate"] = []string{`Basic realm="cloudr"`}
 			c.Status(http.StatusUnauthorized)
 			c.Abort()
 			return

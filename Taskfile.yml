@@ -23,7 +23,7 @@ tasks:
     cmds:
       - yarn build
 
-  create_zip:
+  zip:
     cmds:
       - zip -r assets.zip assets/build
 
@@ -32,6 +32,20 @@ tasks:
       - go build -o dev/cloudr.exe
     env:
       GOOS: windows
+
+  build_linux:
+    cmds:
+      - go build -o dev/cloudr
+    env:
+      GOOS: linux
+
+  build_docker:
+    cmds:
+      - docker build . -t ghcr.io/stefandanzl/cloudr:latest
+
+  push_docker:
+    cmds:
+      - docker push ghcr.io/stefandanzl/cloudr:latest
 
   go_run:
     cmds:
@@ -50,20 +64,6 @@ tasks:
       - cmd: ./cloudr
         platforms: [linux]
 
-  build_linux:
-    cmds:
-      - go build -o dev/cloudr
-    env:
-      GOOS: linux
-
-  build_docker:
-    cmds:
-      - docker build . -t ghcr.io/stefandanzl/cloudr:latest
-
-  push_docker:
-    cmds:
-      - docker push ghcr.io/stefandanzl/cloudr:latest
-
   run:
     cmds:
       - cmd: task build_windows
@@ -77,28 +77,38 @@ tasks:
   dev:
     cmds:
       - task: yarn_build
-      - task: create_zip
+      - task: zip
       - task: firefox
       - task: go_run
 
   build:
     cmds:
       - task: yarn_build
-      - task: create_zip
+      - task: zip
       - task: build_windows
+      - task: firefox
+      - task: run-build
+
+  go:
+    cmds:
+      - cmd: task build_windows
+        platforms: [windows]
+      - cmd: task build_linux
+        platforms: [linux]
+      - task: firefox
       - task: run-build
 
   buildlinux:
     cmds:
       - task: yarn_build
-      - task: create_zip
+      - task: zip
       - task: build_linux
       - task: run-build
 
   docker:
     cmds:
       - task: yarn_build
-      - task: create_zip
+      - task: zip
       - task: build_linux
       - task: build_docker
       - task: push_docker

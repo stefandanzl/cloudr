@@ -455,7 +455,7 @@ func TestFileSystem_GetDownloadURL(t *testing.T) {
 	{
 		err := cache.Deletes([]string{"35"}, "policy_")
 		cache.Set("setting_download_timeout", "20", 0)
-		cache.Set("setting_siteURL", "https://cloudreve.org", 0)
+		cache.Set("setting_siteURL", "https://cloudr.org", 0)
 		asserts.NoError(err)
 		// 查找文件
 		mock.ExpectQuery("SELECT(.+)").WillReturnRows(sqlmock.NewRows([]string{"id", "name", "policy_id"}).AddRow(1, "1.txt", 35))

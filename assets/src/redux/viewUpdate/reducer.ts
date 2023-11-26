@@ -1,6 +1,6 @@
 import { AnyAction } from "redux";
 import Auth from "../../middleware/Auth";
-import { CloudreveFile, SortMethod } from "../../types";
+import { CloudrFile, SortMethod } from "../../types";
 
 export interface ViewUpdateState {
     isLogin: boolean;
@@ -27,7 +27,7 @@ export interface ViewUpdateState {
         share: boolean;
         music: boolean;
         remoteDownload: boolean;
-        remoteDownloadTorrent: CloudreveFile | null;
+        remoteDownloadTorrent: CloudrFile | null;
         getSource: string;
         copy: boolean;
         resave: boolean;

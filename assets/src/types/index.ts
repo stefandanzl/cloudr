@@ -1,4 +1,4 @@
-export interface CloudreveFile {
+export interface CloudrFile {
     id: string;
     name: string;
     size: number;

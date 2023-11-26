@@ -1,4 +1,4 @@
-import { CloudreveFile } from "../types";
+import { CloudrFile } from "../types";
 import { list } from "../services/navigate";
 import { pathJoin } from "../component/Uploader/core/utils";
 
@@ -11,10 +11,10 @@ export function getPreviewPath(selected: any): string {
 }
 
 export async function walk(
-    file: CloudreveFile[],
+    file: CloudrFile[],
     share: any
-): Promise<CloudreveFile[]> {
-    let res: CloudreveFile[] = [];
+): Promise<CloudrFile[]> {
+    let res: CloudrFile[] = [];
     for (const f of file) {
         if (f.type === "file") {
             res.push(f);

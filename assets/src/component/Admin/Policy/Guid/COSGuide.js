@@ -1063,7 +1063,7 @@ export default function COSGuide(props) {
                                     onClick={() => createCORS()}
                                     classes={{ label: classes.viewButtonLabel }}
                                 >
-                                    {t("letCloudreveHelpMe")}
+                                    {t("letCloudrHelpMe")}
                                 </Button>
                             </div>
                         </div>
@@ -1156,7 +1156,7 @@ export default function COSGuide(props) {
                                     onClick={() => creatCallback()}
                                     classes={{ label: classes.viewButtonLabel }}
                                 >
-                                    {t("letCloudreveHelpMe")}
+                                    {t("letCloudrHelpMe")}
                                 </Button>
                             </div>
                         </div>

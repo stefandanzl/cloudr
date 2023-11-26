@@ -19,7 +19,7 @@ import (
 )
 
 const scfFunc = `# -*- coding: utf8 -*-
-# SCF配置COS触发，向 Cloudreve 发送回调
+# SCF配置COS触发，向 Cloudr 发送回调
 from qcloud_cos_v5 import CosConfig
 from qcloud_cos_v5 import CosS3Client
 from qcloud_cos_v5 import CosServiceError
@@ -87,12 +87,12 @@ func CreateSCF(policy *model.Policy, region string) error {
 
 	// 创建云函数
 	req := scf.NewCreateFunctionRequest()
-	funcName := "cloudreve_" + hashid.HashID(policy.ID, hashid.PolicyID) + strconv.FormatInt(time.Now().Unix(), 10)
+	funcName := "cloudr_" + hashid.HashID(policy.ID, hashid.PolicyID) + strconv.FormatInt(time.Now().Unix(), 10)
 	zipFileBytes, _ := ioutil.ReadAll(buff)
 	zipFileStr := string(zipFileBytes)
 	codeSource := "ZipFile"
 	handler := "callback.main_handler"
-	desc := "Cloudreve 用回调函数"
+	desc := "Cloudr 用回调函数"
 	timeout := int64(60)
 	runtime := "Python3.6"
 	req.FunctionName = &funcName

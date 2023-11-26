@@ -1140,7 +1140,7 @@ export default function OSSGuide(props) {
                                     onClick={() => createCORS()}
                                     classes={{ label: classes.viewButtonLabel }}
                                 >
-                                    {t("letCloudreveHelpMe")}
+                                    {t("letCloudrHelpMe")}
                                 </Button>
                             </div>
                         </div>

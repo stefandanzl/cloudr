@@ -58,7 +58,7 @@ func TestCurrentUser(t *testing.T) {
 	sessionFunc(c)
 	util.SetSession(c, map[string]interface{}{"user_id": 1})
 	rows := sqlmock.NewRows([]string{"id", "deleted_at", "email", "options"}).
-		AddRow(1, nil, "admin@cloudreve.org", "{}")
+		AddRow(1, nil, "admin@cloudr.org", "{}")
 	mock.ExpectQuery("^SELECT (.+)").WillReturnRows(rows)
 	CurrentUser()(c)
 	user, _ = c.Get("user")
@@ -161,7 +161,7 @@ func TestWebDAVAuth(t *testing.T) {
 		}
 		mock.ExpectQuery("SELECT(.+)users(.+)").
 			WillReturnRows(
-				sqlmock.NewRows([]string{"id", "password", "email", "options"}).AddRow(1, "123", "who@cloudreve.org", "{}"),
+				sqlmock.NewRows([]string{"id", "password", "email", "options"}).AddRow(1, "123", "who@cloudr.org", "{}"),
 			)
 		// 查找密码
 		mock.ExpectQuery("SELECT(.+)webdav(.+)").WillReturnRows(sqlmock.NewRows([]string{"id"}))
@@ -183,7 +183,7 @@ func TestWebDAVAuth(t *testing.T) {
 					[]string{"id", "password", "email", "group_id", "options"}).
 					AddRow(1,
 						"rfBd67ti3SMtYvSg:ce6dc7bca4f17f2660e18e7608686673eae0fdf3",
-						"who@cloudreve.org",
+						"who@cloudr.org",
 						1,
 						"{}",
 					),
@@ -209,7 +209,7 @@ func TestWebDAVAuth(t *testing.T) {
 					[]string{"id", "password", "email", "group_id", "options"}).
 					AddRow(1,
 						"rfBd67ti3SMtYvSg:ce6dc7bca4f17f2660e18e7608686673eae0fdf3",
-						"who@cloudreve.org",
+						"who@cloudr.org",
 						1,
 						"{}",
 					),

@@ -84,8 +84,8 @@ const generators = [
         ],
     },
     {
-        name: "cloudreveBuiltin",
-        des: "cloudreveBuiltinDes",
+        name: "cloudrBuiltin",
+        des: "cloudrBuiltinDes",
         enableFlag: "thumb_builtin_enabled",
     },
 ];

@@ -166,7 +166,7 @@ func addDefaultUser() {
 	// 未找到初始用户时，则创建
 	if gorm.IsRecordNotFoundError(err) {
 		defaultUser := NewUser()
-		defaultUser.Email = "admin@cloudreve.org"
+		defaultUser.Email = "admin@cloudr.org"
 		defaultUser.Nick = "admin"
 		defaultUser.Status = Active
 		defaultUser.GroupID = 1
@@ -179,7 +179,7 @@ func addDefaultUser() {
 		}
 
 		c := color.New(color.FgWhite).Add(color.BgBlack).Add(color.Bold)
-		util.Log().Info("Admin user name: " + c.Sprint("admin@cloudreve.org"))
+		util.Log().Info("Admin user name: " + c.Sprint("admin@cloudr.org"))
 		util.Log().Info("Admin password: " + c.Sprint(password))
 	}
 }
