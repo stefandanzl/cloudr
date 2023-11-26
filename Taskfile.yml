@@ -1,6 +1,9 @@
 version: '3'
 
 tasks:
+  help:
+    cmds:
+      - echo ""
 
   yarn_install:
     dir: assets
@@ -30,65 +33,67 @@ tasks:
     env:
       GOOS: windows
 
-  run_cloudr_windows:
-    dir: dev
-    cmds:
-      - ./cloudr.exe
-
-  run_cloudr_linux:
-    dir: dev
-    cmds:
-      - ./cloudr
-
   go_run:
     cmds:
       - go run .
 
-  open_firefox:
+  firefox:
+    dir: "C:/Program Files/Mozilla Firefox"
     cmds:
-      - firefox --private-window http://localhost:5212
+      - ./firefox.exe --private-window http://localhost:5212
 
-  # Docker Container tasks
-  docker_container:
+  run-build:
+    dir: dev
     cmds:
-      - task: yarn_build
+      - cmd: ./cloudr.exe
+        platforms: [windows]
+      - cmd: ./cloudr
+        platforms: [linux]
 
-    build_linux:
-      cmds:
-        - go build -o dev/cloudr
-      env:
-        GOOS: linux
+  build_linux:
+    cmds:
+      - go build -o dev/cloudr
+    env:
+      GOOS: linux
 
-    build_docker:
-      cmds:
-        - docker build . -t ghcr.io/stefandanzl/cloudr:latest
+  build_docker:
+    cmds:
+      - docker build . -t ghcr.io/stefandanzl/cloudr:latest
 
-    push_docker:
-      cmds:
-        - docker push ghcr.io/stefandanzl/cloudr:latest
+  push_docker:
+    cmds:
+      - docker push ghcr.io/stefandanzl/cloudr:latest
 
-  
+  run:
+    cmds:
+      - cmd: task build_windows
+        platforms: [windows]
+      - cmd: task build_linux
+        platforms: [linux]
+      - task: firefox
+      - task: run-build
+        
   # Local Development tasks
   dev:
     cmds:
       - task: yarn_build
       - task: create_zip
+      - task: firefox
       - task: go_run
-
 
   build:
     cmds:
       - task: yarn_build
       - task: create_zip
       - task: build_windows
-      - task: run_cloudr
+      - task: run-build
 
-  devlinux:
+  buildlinux:
     cmds:
       - task: yarn_build
       - task: create_zip
       - task: build_linux
-      - task: run_cloudr
+      - task: run-build
 
   docker:
     cmds:
