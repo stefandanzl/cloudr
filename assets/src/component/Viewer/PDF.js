@@ -395,7 +395,7 @@ export default function PDFViewer() {
             };
           }
         // eslint-disable-line 
-          return () => {};
+        //   return () => {};
     },[contentState])
 
 
