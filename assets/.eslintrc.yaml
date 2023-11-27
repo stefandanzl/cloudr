@@ -26,7 +26,7 @@ ignorePatterns:
 rules:
   react/prop-types: 0
   react-hooks/rules-of-hooks: "error"
-  # TODO: 修改添加deps后出现的死循环
+  # TODO: Modify the infinite loop that occurs after adding deps
   react-hooks/exhaustive-deps: 0
   '@typescript-eslint/explicit-function-return-type': 0
   '@typescript-eslint/no-explicit-any': 0
@@ -41,3 +41,6 @@ overrides:
   - files: ['config/*.js', 'scripts/*.js']
     rules:
       '@typescript-eslint/no-var-requires': 0
+#  - files: ['*.js']
+#    rules:
+#      '@typescript-eslint/no-empty-function': 0
