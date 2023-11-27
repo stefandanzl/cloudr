@@ -14,7 +14,7 @@ import UseFileSubTitle from "../../hooks/fileSubtitle";
 import SaveButton from "../Dial/Save";
 import API from "../../middleware/Api";
 import { Eraser } from "mdi-material-ui";
-import loadScript from "../../utils/loadScript";
+
 
 const useStyles = makeStyles((theme) => ({
     layout: {
