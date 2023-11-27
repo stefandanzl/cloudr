@@ -223,8 +223,8 @@ class ContextMenuCompoment extends Component {
         );
     };
 
-    // 暂时只对空白处右键菜单使用这个函数，疑似有bug会导致的一个菜单被默认选中。
-    // 相关issue： https://github.com/mui-org/material-ui/issues/23747
+    // For the time being, this function is only used for the right-click menu of blank spaces. It is suspected that a bug will cause a menu to be selected by default.
+    // Related issue： https://github.com/mui-org/material-ui/issues/23747
     renderMenuItems = (items) => {
         const res = [];
         let key = 0;

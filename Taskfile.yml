@@ -25,6 +25,7 @@ tasks:
 
   zip:
     cmds:
+      - cp -r C:/PROJECTS/PROGRAMMIEREN/Javascript/PSPDFKIT/pspdfkit-lib-2023.5.2 assets/build/pspdfkit-lib/
       - zip -r assets.zip assets/build
 
   build_windows:
@@ -56,15 +57,30 @@ tasks:
     cmds:
       - ./firefox.exe --private-window http://localhost:5212
 
-  run-build:
+  finished:
+    cmds:
+      - messagebox "Finished task!"
+
+  rclone:
+    cmds:
+      - "rclone mount devcloudr:/ R: --vfs-cache-mode full --volname Cloudr"
+
+
+
+
+
+#######
+
+  run:
     dir: dev
     cmds:
+      - task: firefox
       - cmd: ./cloudr.exe
         platforms: [windows]
       - cmd: ./cloudr
         platforms: [linux]
 
-  run:
+  build-run:
     cmds:
       - cmd: task build_windows
         platforms: [windows]
@@ -79,15 +95,16 @@ tasks:
       - task: yarn_build
       - task: zip
       - task: firefox
+      - task: finished
       - task: go_run
 
-  build:
+  full:
     cmds:
-      - task: yarn_build
+      - cmd: task yarn_build || messagebox "React compilation Error!"
       - task: zip
       - task: build_windows
-      - task: firefox
-      - task: run-build
+      - task: finished
+      - task: run
 
   go:
     cmds:
@@ -95,8 +112,7 @@ tasks:
         platforms: [windows]
       - cmd: task build_linux
         platforms: [linux]
-      - task: firefox
-      - task: run-build
+      - task: run
 
   buildlinux:
     cmds:
@@ -105,11 +121,18 @@ tasks:
       - task: build_linux
       - task: run-build
 
-  docker:
+  build-docker:
     cmds:
       - task: yarn_build
       - task: zip
       - task: build_linux
       - task: build_docker
       - task: push_docker
+      - task: finished
 
+  docker:
+    cmds:
+      - task: build_linux
+      - task: build_docker
+      - task: push_docker
+      - task: finished

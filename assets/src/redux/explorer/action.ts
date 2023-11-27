@@ -792,6 +792,9 @@ export const openPreview = (share: any) => {
             case "pdf":
                 dispatch(openViewer("pdf", selected[0], isShare));
                 return;
+            case "xopp":
+                dispatch(openViewer("xopp", selected[0], isShare));
+                return;
             case "edit":
                 dispatch(openViewer("text", selected[0], isShare));
                 return;
@@ -810,7 +813,7 @@ export const openPreview = (share: any) => {
 export const selectFile = (file: any, event: any, fileIndex: any) => {
     const { ctrlKey, metaKey, shiftKey } = event;
     return (dispatch: any, getState: any) => {
-        // 多种组合操作忽略
+        // Ignore multiple combination operations
         if (
             [ctrlKey, shiftKey].filter(Boolean).length > 1 ||
             [metaKey, shiftKey].filter(Boolean).length > 1
@@ -822,11 +825,11 @@ export const selectFile = (file: any, event: any, fileIndex: any) => {
         const { selected, lastSelect, dirList, fileList, shiftSelectedIds } =
             explorer;
         if (shiftKey && !ctrlKey && !metaKey && selected.length !== 0) {
-            // shift 多选
-            // 取消原有选择
+            // shift multiple selection
+            // Cancel original selection
             dispatch(removeSelectedTargets(selected.map((v: any) => v.id)));
             const all = [...dirList, ...fileList];
-            // 添加新选择
+            // Add new selection
             const begin = Math.min(lastSelect.index, fileIndex);
             const end = Math.max(lastSelect.index, fileIndex);
             const list = file.type === "dir" ? dirList : fileList;
@@ -836,7 +839,7 @@ export const selectFile = (file: any, event: any, fileIndex: any) => {
         dispatch(setLastSelect(file, fileIndex));
         dispatch(setShiftSelectedIds([]));
         if ((ctrlKey && !isMacbook) || (metaKey && isMacbook)) {
-            // Ctrl/Command 单击添加/删除
+            // Ctrl/Command Click Add/Remove
             const presentIndex = selected.findIndex((value: any) => {
                 return value.id === file.id;
             });

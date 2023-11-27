@@ -3,7 +3,7 @@ import React, { useCallback, useState, useEffect, useRef } from "react";
 // import { Paper } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
 import { useLocation, useParams, useRouteMatch } from "react-router";
-import { getBaseURL } from "../../middleware/Api";
+import { baseURL, getBaseURL } from "../../middleware/Api";
 import { useDispatch } from "react-redux";
 import pathHelper from "../../utils/page";
 // import TextLoading from "../Placeholder/TextLoading";
@@ -14,6 +14,7 @@ import UseFileSubTitle from "../../hooks/fileSubtitle";
 import SaveButton from "../Dial/Save";
 import API from "../../middleware/Api";
 import { Eraser } from "mdi-material-ui";
+import loadScript from "../../utils/loadScript";
 
 const useStyles = makeStyles((theme) => ({
     layout: {
@@ -66,8 +67,6 @@ export default function PDFViewer() {
     const [idRef, setIdRef] = useState(null);
 
 
-    // const cdnBase = "https://cdn.danzl.it/pspdfkit-2023.4.5/"
-
     // const [pageNumber, setPageNumber] = useState(1);
 
     const dispatch = useDispatch();
@@ -110,12 +109,18 @@ export default function PDFViewer() {
 
     useEffect(() => {
         const container = containerRef.current;
-        let PSPDFKit;
+        let PSPDFKit;    // LOCAL and WEB
+        
+        // const cdnBase = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                  // WEB
+        // const baseURL = cdnBase                                                                             // WEB
+        // const scriptUrl = cdnBase + '/pspdfkit.js';                                                         // WEB
+        // loadScript(scriptUrl).then                                                                          // WEB
 
-        (async function () {
-            // PSPDFKit = await import(cdnBase+'pspdfkit.js');
+        (async function () {                                                                                
 
-            PSPDFKit = await import("pspdfkit");
+            const baseURL = `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`      // LOCAL                                                      
+            PSPDFKit = await import("pspdfkit");                                                                  // LOCAL
+            //PSPDFKit = await import(cdnBase+'pspdfkit.js'); 
             const annotationPresets = PSPDFKit.defaultAnnotationPresets;
             annotationPresets.highlighter.lineWidth = 12;
             annotationPresets.ink.lineWidth = 1;
@@ -247,7 +252,7 @@ export default function PDFViewer() {
                     const instance = await PSPDFKit.load({
                         container,
                         document,
-                        baseUrl: `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`,
+                        baseUrl: baseURL,
                         // baseUrl: cdnBase,
                         annotationPresets,
                         toolbarItems,

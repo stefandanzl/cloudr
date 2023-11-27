@@ -25,6 +25,7 @@ import { lighten } from "@material-ui/core/styles";
 import useTheme from "@material-ui/core/styles/useTheme";
 import { Avatar } from "@material-ui/core";
 import { MenuBook } from "@material-ui/icons";
+import { PencilBoxMultiple } from "mdi-material-ui";
 
 const icons = {
     audio: {
@@ -42,6 +43,10 @@ const icons = {
     pdf: {
         color: "#f44336",
         icon: PdfIcon,
+    },
+    xournal: {
+        color: "#72db72",
+        icon: PencilBoxMultiple,
     },
     word: {
         color: "#538ce5",

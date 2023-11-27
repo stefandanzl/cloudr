@@ -194,6 +194,13 @@ class SharedFileCompoment extends Component {
                         encodeURIComponent(this.props.share.source.name)
                 );
                 return;
+            case "xopp":
+                this.props.history.push(
+                    this.props.share.key +
+                        "/xopp?name=" +
+                        encodeURIComponent(this.props.share.source.name)
+                );
+                return;
             case "code":
                 this.props.history.push(
                     this.props.share.key +
