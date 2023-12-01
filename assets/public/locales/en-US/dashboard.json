@@ -303,7 +303,7 @@
     "sharp": "#",
     "name": "Name",
     "type": "Type",
-    "childFiles": "Chile files",
+    "childFiles": "Number of files",
     "totalSize": "Total size",
     "actions": "Actions",
     "authSuccess": "Authorization granted.",

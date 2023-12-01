@@ -25,7 +25,7 @@ import {
     AccountPlus,
     LogoutVariant,
 } from "mdi-material-ui";
-import { withRouter } from "react-router-dom";
+import { withRouter, Link } from "react-router-dom";
 import {
     AppBar,
     Drawer,
@@ -610,6 +610,7 @@ class NavbarCompoment extends Component {
                                 </Grow>
                             )}
                         {this.props.selected.length === 0 && (
+                            // <Link to=".." relative="path"> Doesn't work with Cloudr's pathname style 
                             <Typography
                                 variant="h6"
                                 color="inherit"
@@ -618,13 +619,14 @@ class NavbarCompoment extends Component {
                                 }}
                                 noWrap
                                 onClick={() => {
-                                    this.props.history.push("/");
+                                    this.props.history.goBack();        //push(".")    push("/");   Cloudr   go up one level
                                 }}
                             >
                                 {this.props.subTitle
                                     ? this.props.subTitle
                                     : this.props.title}
                             </Typography>
+                            // </Link>
                         )}
 
                         {!this.props.isMultiple &&

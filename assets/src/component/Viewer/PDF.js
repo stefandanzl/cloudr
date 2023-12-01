@@ -46,6 +46,7 @@ function useQuery() {
 }
 
 
+
 export default function PDFViewer() {
     const containerRef = useRef(null);
 
@@ -68,7 +69,7 @@ export default function PDFViewer() {
     const [idRef, setIdRef] = useState(null);
     const [contentState, setContentState] = useState("unchanged");
     const [pdfState, setPdfState] = useState(true);
-    const autoSaveEnabled = true;
+    const [pdfSettings, setPdfSettings] = useState({ autoSave: true, autoSaveInterval_S: 10, changePrompt: true, saveButton: true, })
 
     // const [pageNumber, setPageNumber] = useState(1);
 
@@ -79,6 +80,32 @@ export default function PDFViewer() {
         [dispatch]
     );
 
+    /* useEffect(()=>{
+     // const getSettings = () => {
+         if (this.state.settings.two_factor) {
+             this.setState({ twoFactor: true });
+             return;
+         }
+         API.get("/user/setting/pdf")
+             .then((response) => {
+                 setPdfSettings(response)
+                 // this.setState({
+                 //     two_fa_secret: response.data,
+                 //     twoFactor: true,
+                 // });
+             })
+             .catch((error) => {
+                console.log("Error getting setting 'pdf'")
+                ToggleSnackbar("top", "right", error.message, "error");
+                 // this.props.toggleSnackbar(
+                 //     "top",
+                 //     "right",
+                 //     error.message,
+                 //     "error"
+                 // );
+             });
+     // };
+         },[]); */
 
 
     const save = async () => {
@@ -120,283 +147,307 @@ export default function PDFViewer() {
         // const baseURL = cdnBase                                                                             // WEB
         // const scriptUrl = cdnBase + '/pspdfkit.js';                                                         // WEB
         // loadScript(scriptUrl).then                                                                          // WEB
-        
-            if (pdfState) {
-                setPdfState(false);
-                let PSPDFKit;
 
-                (async function(){
-                    const baseURL = `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`      // LOCAL                                                      
-                    PSPDFKit = await import("pspdfkit");                                                                  // LOCAL
-                    //PSPDFKit = await import(cdnBase+'pspdfkit.js'); 
-                    const annotationPresets = PSPDFKit.defaultAnnotationPresets;
-                    annotationPresets.highlighter.lineWidth = 12;
-                    annotationPresets.ink.lineWidth = 1;
+        if (pdfState) {
+            setPdfState(false);
+            let PSPDFKit;
 
-                    const allowedTypes = ["sidebar-thumbnails", "sidebar-document-outline", "sidebar-annotations", "sidebar-bookmarks"];
+            (async function () {
+                const baseURL = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                      // WEB
+                // const baseURL = `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`      // LOCAL                                                      
+                PSPDFKit = await import("pspdfkit");                                                                  // LOCAL
+                //PSPDFKit = await import(cdnBase+'pspdfkit.js'); 
+                const annotationPresets = PSPDFKit.defaultAnnotationPresets;
+                annotationPresets.highlighter.lineWidth = 12;
+                annotationPresets.ink.lineWidth = 1;
 
-                    let toolbarItems = PSPDFKit.defaultToolbarItems;
+                const allowedTypes = ["sidebar-thumbnails", "sidebar-document-outline", "sidebar-annotations", "sidebar-bookmarks"];
 
-                    toolbarItems = toolbarItems
-                        .filter(item => allowedTypes.includes(item.type))
-                        .map(item => ({ ...item })); // Create a new array with the filtered items
+                let toolbarItems = PSPDFKit.defaultToolbarItems;
 
-                    // Now toolbarItems is a new array with the desired items
+                toolbarItems = toolbarItems
+                    .filter(item => allowedTypes.includes(item.type))
+                    .map(item => ({ ...item })); // Create a new array with the filtered items
+
+                // Now toolbarItems is a new array with the desired items
 
 
-                    toolbarItems.push(
-                        {
-                            type: "responsive-group",
-                            id: "m-hide",
-                            mediaQueries: ["max-width: 600px"],
-                            icon: "https://example.com/icon.png",
-                        }, {
-                        type: "document-editor",
-                        dropdownGroup: "doc",
-                        responsiveGroup: "m-hide",
+                toolbarItems.push(
+                    {
+                        type: "responsive-group",
+                        id: "m-hide",
+                        mediaQueries: ["max-width: 600px"],
+                        icon: "https://example.com/icon.png",
                     }, {
-                        type: "document-crop",
-                        dropdownGroup: "doc",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "export-pdf",
-                        dropdownGroup: "doc",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "print",
-                        dropdownGroup: "doc",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "zoom-out",
-                        dropdownGroup: "zoom",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "zoom-in",
-                        dropdownGroup: "zoom",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "zoom-mode",
-                        dropdownGroup: "zoom",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "search",
-                        dropdownGroup: "zoom",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "spacer",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "highlighter",
-                        title: "gelb",
-                        id: "gelb",
-                        dropdownGroup: "gelb",
-                    }, {
-                        type: "ink",
-                        dropdownGroup: "pen",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "ink-eraser",
-                        dropdownGroup: "rubber",
-                    }, {
-                        type: "text-highlighter",
-                        dropdownGroup: "hightext",
-                        selected: true,
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "callout",
-                        dropdownGroup: "add",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "note",
-                        dropdownGroup: "add",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "text",
-                        dropdownGroup: "add",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "link",
-                        dropdownGroup: "add",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "image",
-                        dropdownGroup: "add",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "stamp",
-                        dropdownGroup: "add",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "line",
-                        dropdownGroup: "line",
-                        responsiveGroup: "m-hide",
-                        //selected: true,
-                    }, {
-                        type: "arrow",
-                        dropdownGroup: "line",
-                        responsiveGroup: "m-hide",
-                        //selected: true,
-                    }, {
-                        type: "rectangle",
-                        dropdownGroup: "line",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "polygon",
-                        dropdownGroup: "line",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "multi-annotations-selection",
-                        dropdownGroup: "multi",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "spacer",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "highlighter",
-                        dropdownGroup: "h1",
-                        responsiveGroup: "m-hide",
-                    }, {
-                        type: "pan",
-                        dropdownGroup: "pan2",
-                    }
+                    type: "document-editor",
+                    dropdownGroup: "doc",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "document-crop",
+                    dropdownGroup: "doc",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "export-pdf",
+                    dropdownGroup: "doc",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "print",
+                    dropdownGroup: "doc",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "zoom-out",
+                    dropdownGroup: "zoom",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "zoom-in",
+                    dropdownGroup: "zoom",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "zoom-mode",
+                    dropdownGroup: "zoom",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "search",
+                    dropdownGroup: "zoom",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "spacer",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "highlighter",
+                    title: "gelb",
+                    id: "gelb",
+                    dropdownGroup: "gelb",
+                }, {
+                    type: "ink",
+                    dropdownGroup: "pen",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "ink-eraser",
+                    dropdownGroup: "rubber",
+                }, {
+                    type: "text-highlighter",
+                    dropdownGroup: "hightext",
+                    selected: true,
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "callout",
+                    dropdownGroup: "add",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "note",
+                    dropdownGroup: "add",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "text",
+                    dropdownGroup: "add",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "link",
+                    dropdownGroup: "add",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "image",
+                    dropdownGroup: "add",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "stamp",
+                    dropdownGroup: "add",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "line",
+                    dropdownGroup: "line",
+                    responsiveGroup: "m-hide",
+                    //selected: true,
+                }, {
+                    type: "arrow",
+                    dropdownGroup: "line",
+                    responsiveGroup: "m-hide",
+                    //selected: true,
+                }, {
+                    type: "rectangle",
+                    dropdownGroup: "line",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "polygon",
+                    dropdownGroup: "line",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "multi-annotations-selection",
+                    dropdownGroup: "multi",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "spacer",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "highlighter",
+                    dropdownGroup: "h1",
+                    responsiveGroup: "m-hide",
+                }, {
+                    type: "pan",
+                    dropdownGroup: "pan2",
+                }
 
-                    );
+                );
 
-                    const document =
-                        getBaseURL() +
-                        (pathHelper.isSharePage(location.pathname)
-                            ? "/share/preview/" +
-                            id +
-                            (query.get("share_path") !== ""
-                                ? "?path=" +
-                                encodeURIComponent(query.get("share_path"))
-                                : "")
-                            : "/file/preview/" + query.get("id"));
-
-
-
-                    // const loadPdf = async () => {
-                    // (async function () {
-                        try {
-                            PSPDFKit.unload(container);
-                        } catch {
-                            console.log("no instance")
-                        }
+                const document =
+                    getBaseURL() +
+                    (pathHelper.isSharePage(location.pathname)
+                        ? "/share/preview/" +
+                        id +
+                        (query.get("share_path") !== ""
+                            ? "?path=" +
+                            encodeURIComponent(query.get("share_path"))
+                            : "")
+                        : "/file/preview/" + query.get("id"));
 
 
-                        try {
-                            const instance = await PSPDFKit.load({
-                                container,
-                                document,
-                                baseUrl: baseURL,
-                                // baseUrl: cdnBase,
-                                annotationPresets,
-                                toolbarItems,
-                                theme: PSPDFKit.Theme.DARK,
-                                toolbarPlacement: PSPDFKit.ToolbarPlacement.BOTTOM,
 
-                                enableClipboardActions: true,
-                                enableHistory: true
-                            })
-                                .then(async (instance) => {
-                                    // instancer = instance;
-                                    // instanceRef = instance;
-                                    // idRef = query.get("id");
-                                    setPdfInstance(instance);
-                                    console.log("INSTANCEEE:", pdfInstance)
-
-                                    // instance.addEventListener(
-                                    //     "document.saveStateChange",
-                                    //     async (event) => {
-                                    //         console.log(
-                                    //             `Save state changed: ${event.hasUnsavedChanges}`
-                                    //         );
-                                    //         //   console.log(props.id)
-                                    //         // if (event.hasUnsavedChanges){save()}
-                                    //     }
-                                    // );
+                // const loadPdf = async () => {
+                // (async function () {
+                try {
+                    PSPDFKit.unload(container);
+                } catch {
+                    console.log("no instance")
+                }
 
 
-                                    instance.addEventListener(
-                                        "annotations.willChange",
-                                        (event) => {
-                                            const annotation = event.annotations.get(0);
-                                            if (
-                                                event.reason ===
-                                                PSPDFKit.AnnotationsWillChangeReason
-                                                    .DELETE_START
-                                            ) {
-                                                console.log(
-                                                    "Will open deletion confirmation dialog"
-                                                );
-                                                // We need to wrap the logic in a setTimeOut() because modal will get actually rendered on the next tick
-                                                setTimeout(function () {
-                                                    // The button is in the context of the PSPDFKit iframe
-                                                    const button =
-                                                        instance.contentDocument.getElementsByClassName(
-                                                            "PSPDFKit-Confirm-Dialog-Button-Confirm"
-                                                        )[0];
-                                                    button.click(); //.focus()
-                                                }, 0);
-                                            }
-                                        }
-                                    );
+                try {
+                    const instance = await PSPDFKit.load({
+                        container,
+                        document,
+                        baseUrl: baseURL,
+                        // baseUrl: cdnBase,
+                        annotationPresets,
+                        toolbarItems,
+                        theme: PSPDFKit.Theme.DARK,
+                        toolbarPlacement: PSPDFKit.ToolbarPlacement.BOTTOM,
+
+                        enableClipboardActions: true,
+                        enableHistory: true
+                    })
+                        .then(async (instance) => {
+                            // instancer = instance;
+                            // instanceRef = instance;
+                            // idRef = query.get("id");
+                            setPdfInstance(instance);
+                            console.log("INSTANCEEE:", pdfInstance)
+
+                            const STORAGE_KEY = "lastViewedPageMap";
+                            const documentId = query.get("id");
+                            const lastViewedPageString = localStorage.getItem(STORAGE_KEY);
+                            if (lastViewedPageString) {
+                                const map = JSON.parse(lastViewedPageString);
+                                const page = map[documentId];
+                                if (page) {
+                                    instance.setViewState(v => v.set("currentPageIndex", parseInt(page)));
+                                }
+                            }
+
+                            instance.addEventListener("viewState.currentPageIndex.change", page => {
+                                const current = localStorage.getItem(STORAGE_KEY);
+                                const map = current ? JSON.parse(current) : {};
+                                localStorage.setItem(
+                                    STORAGE_KEY,
+                                    JSON.stringify({ ...map, [documentId]: page })
+                                );
+                            });
+
+                            // instance.addEventListener(
+                            //     "document.saveStateChange",
+                            //     async (event) => {
+                            //         console.log(
+                            //             `Save state changed: ${event.hasUnsavedChanges}`
+                            //         );
+                            //         //   console.log(props.id)
+                            //         // if (event.hasUnsavedChanges){save()}
+                            //     }
+                            // );
 
 
-                                    // instance.addEventListener("annotations.change", () => {
-                                    //     console.log("Something in the annotations has changed.");
-                                    //   });
-                                    instance.addEventListener("annotations.create", createdAnnotations => {
-                                        console.log("BEFORE", contentState)
-                                        setContentState((prev) => { return "modified" });
-                                        console.log("AFTER", contentState)
-                                        console.log("createdAnnotations", createdAnnotations);
-                                    });
+                            instance.addEventListener(
+                                "annotations.willChange",
+                                (event) => {
+                                    const annotation = event.annotations.get(0);
+                                    if (
+                                        event.reason ===
+                                        PSPDFKit.AnnotationsWillChangeReason
+                                            .DELETE_START
+                                    ) {
+                                        console.log(
+                                            "Will open deletion confirmation dialog"
+                                        );
+                                        // We need to wrap the logic in a setTimeOut() because modal will get actually rendered on the next tick
+                                        setTimeout(function () {
+                                            // The button is in the context of the PSPDFKit iframe
+                                            const button =
+                                                instance.contentDocument.getElementsByClassName(
+                                                    "PSPDFKit-Confirm-Dialog-Button-Confirm"
+                                                )[0];
+                                            button.click(); //.focus()
+                                        }, 0);
+                                    }
+                                }
+                            );
 
 
-                                }).catch((error) => {
-                                    console.error('PSPDFKit loading error:', error);
-                                });
-
-                            console.log("STRINGGGif", JSON.stringify(pdfInstance));
-                        } catch (error) {
-                            console.error("Error loading PSPDFKit:", error);
-                        }
-                    // })();
-
-                    // const pdfFunc = loadPdf();
-                })();
-
-                return () => {
-                    PSPDFKit && PSPDFKit.unload(container);
-                    if (pdfInstance) {
-                        pdfInstance.destroy();
-                    }
-                };}
-
-                // PSPDFKit && ;
-            }, [pdfState, contentState]);
+                            // instance.addEventListener("annotations.change", () => {
+                            //     console.log("Something in the annotations has changed.");
+                            //   });
+                            instance.addEventListener("annotations.create", createdAnnotations => {
+                                console.log("BEFORE", contentState)
+                                setContentState((prev) => { return "modified" });
+                                console.log("AFTER", contentState)
+                                console.log("createdAnnotations", createdAnnotations);
+                            });
 
 
-    useEffect(()=>{
+                        }).catch((error) => {
+                            console.error('PSPDFKit loading error:', error);
+                        });
 
-        const handler = (event) => {
-            event.preventDefault();
-            event.returnValue = "";
-          };
+                    console.log("STRINGGGif", JSON.stringify(pdfInstance));
+                } catch (error) {
+                    console.error("Error loading PSPDFKit:", error);
+                }
+                // })();
 
-          // https://www.wpeform.io/blog/exit-prompt-on-window-close-react-app/
-          // if the form is NOT unchanged, then set the onbeforeunload
-          if (contentState !== "unchanged") {
-            window.addEventListener("beforeunload", handler);
-            // clean it up, if the dirty state changes
+                // const pdfFunc = loadPdf();
+            })();
+
             return () => {
-              window.removeEventListener("beforeunload", handler);
+                PSPDFKit && PSPDFKit.unload(container);
+                if (pdfInstance) {
+                    pdfInstance.destroy();
+                }
             };
-          }
+        }
+
+        // PSPDFKit && ;
+    }, [pdfState, contentState]);
+
+
+    useEffect(() => {
+
+        if (pdfSettings.changePrompt) {
+            const handler = (event) => {
+                event.preventDefault();
+                event.returnValue = "";
+            };
+
+            // https://www.wpeform.io/blog/exit-prompt-on-window-close-react-app/
+            // if the form is NOT unchanged, then set the onbeforeunload
+            if (contentState !== "unchanged") {
+                window.addEventListener("beforeunload", handler);
+                // clean it up, if the dirty state changes
+                return () => {
+                    window.removeEventListener("beforeunload", handler);
+                };
+            }
+        }
         // eslint-disable-line 
         //   return () => {};
-    },[contentState])
+    }, [pdfSettings, contentState])
 
 
 
@@ -420,7 +471,7 @@ export default function PDFViewer() {
     // Conditionally run the useEffect hook based on autoSaveEnabled
 
     useEffect(() => {
-        if (autoSaveEnabled) {
+        if (pdfSettings.autoSave) {
             const intervalId = setInterval(() => {
                 // Example usage
                 const currentTime = getCurrentTime();
@@ -431,18 +482,18 @@ export default function PDFViewer() {
                 if (contentState !== "unchanged") {
                     save();
                 }
-            }, 20000); // 20 seconds = 20000
+            }, 1000 * pdfSettings.autoSaveInterval_S); // 20 seconds = 20000
 
             // Clean up interval when the component is unmounted
             return () => clearInterval(intervalId);
         }
-    }, [autoSaveEnabled, contentState]);
+    }, [pdfSettings, contentState]);
 
 
     const classes = useStyles();
     return (
         <div className={classes.layout}>
-            <SaveButton onClick={save} status={status} />
+            {pdfSettings.saveButton && <SaveButton onClick={save} status={status} />}
 
             <div
                 ref={containerRef}
