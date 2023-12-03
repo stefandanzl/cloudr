@@ -2,7 +2,7 @@ version: "3.8"
 services:
   cloudreve:
     container_name: cloudreve
-    image: cloudreve/cloudreve:latest
+    image: docker pull ghcr.io/stefandanzl/cloudr:latest
     restart: unless-stopped
     ports:
       - "5212:5212"
