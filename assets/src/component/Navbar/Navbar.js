@@ -74,6 +74,8 @@ import {
 } from "../../redux/explorer/action";
 import { withTranslation } from "react-i18next";
 import MuiListItem from "@material-ui/core/ListItem";
+import { pathBack } from "../../utils";
+import ObjectIcon from "../FileManager/ObjectIcon";
 
 vhCheck();
 const drawerWidth = 240;
@@ -396,6 +398,7 @@ class NavbarCompoment extends Component {
         const isSharePage = pathHelper.isSharePage(
             this.props.location.pathname
         );
+        const { history } = this.props;
 
         const drawer = (
             <div id="container" className={classes.upDrawer}>
@@ -616,10 +619,49 @@ class NavbarCompoment extends Component {
                                 color="inherit"
                                 style={{
                                     cursor: "pointer",
+                                    userSelect: "none", 
                                 }}
                                 noWrap
+                                onDoubleClick={()=>{this.props.history.push("/")}}
                                 onClick={() => {
-                                    this.props.history.goBack();        //push(".")    push("/");   Cloudr   go up one level
+                                    console.log(history)
+                                    // if (this.props.location.pathname === "/home" && this.props.location.search === "") {
+                                    //     console.log("already home!")
+                                    // }else{
+                                        this.props.history.goBack();
+                                    
+                                    // this.props.history.push(pathBack(this.props.history[0]))//goBack();        //push(".")    push("/");   Cloudr   go up one level
+                                    // const url = history.location.pathname
+                                    // const url = window.location.href
+
+                                    // window.location.pathname  /home
+                                    // window.location.search ?path=%2F
+                                    // window.location.
+                               /*   const url = window.location.pathname
+                                    const query = window.location.search
+
+                                  if (url.startsWith("/home")) {
+                                        console.log("The string starts with '/home'");
+                                        const lastIndex = query.lastIndexOf("%2F");
+                                        const queryMod = query.substring(0, lastIndex);
+                                        // this.props.history.push(url+queryMod);
+                                        // this.props.history.push("/shares?")
+                                        // history.push(url+query)
+                                        // this.props.history.push({
+                                        //     pathname: url,
+                                        //     search: queryMod,
+                                        //   });
+                                        // location.assign(url+queryMod)
+                                      } else {
+                                        console.log("The string does not start with '/home'");
+                                        this.props.history.goBack();
+                                      } */
+
+                                    console.log(history.location.pathname);
+                                    console.log(history.location);
+                                    console.log(pathBack(history.location.pathname));
+                                    
+                                    // history.push(pathBack(history.location.pathname));
                                 }}
                             >
                                 {this.props.subTitle

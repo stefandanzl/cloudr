@@ -26,13 +26,16 @@ import useDragScrolling from "./DnD/Scrolling";
 const useStyles = makeStyles(() => ({
     container: {
         padding: "7px",
+
     },
     fixFlex: {
         minWidth: 0,
+        
     },
     dragging: {
         opacity: 0.4,
     },
+    
 }));
 
 export default function ObjectIcon(props) {
@@ -215,6 +218,7 @@ export default function ObjectIcon(props) {
                         handleClick={handleClick}
                         handleDoubleClick={handleDoubleClick.bind(this)}
                         file={props.file}
+                        
                     />
                 )}
             </>
@@ -227,13 +231,15 @@ export default function ObjectIcon(props) {
             className={classNames({
                 [classes.container]: viewMethod !== "list",
                 [classes.dragging]: isDragging,
-            })}
+            }
+            )}
+            
         >
             <div
                 className={classes.fixFlex}
                 onContextMenu={contextMenu}
                 onClick={handleClick}
-                onDoubleClick={handleDoubleClick.bind(this)}
+                onDoubleClick={handleDoubleClick.bind(this)}                
             >
                 {props.file.type === "dir" && viewMethod !== "list" && (
                     <DropWarpper
