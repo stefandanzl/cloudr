@@ -309,9 +309,7 @@ export default function Explorer({ share }) {
                         </TableCell>
                     </TableRow>
                 </TableHead>
-                <TableBody
-                
-                >
+                <TableBody>
                     {pathHelper.isMobile() && path !== "/" && (
                         <ObjectIcon
                             file={{
@@ -321,21 +319,18 @@ export default function Explorer({ share }) {
                         />
                     )}
                     {dirList.map((value, index) => (
-                        
-                        <ObjectIcon                            
+                        <ObjectIcon
                             key={value.id}
                             file={value}
                             index={startIndex + index}
                         />
                     ))}
                     {fileList.map((value, index) => (
-                        
                         <ObjectIcon
                             key={value.id}
                             file={value}
                             index={startIndex + dirList.length + index}
                         />
-                        
                     ))}
                 </TableBody>
             </Table>
@@ -406,7 +401,6 @@ export default function Explorer({ share }) {
                                             startIndex + dirList.length + index
                                         }
                                         file={value}
-                                        
                                     />
                                 </Grid>
                             ))}
@@ -432,7 +426,6 @@ export default function Explorer({ share }) {
                 },
                 classes.button
             )}
-            /** hier für gesamten Bereich **/
         >
             <GlobalHotKeys handlers={handlers} allowChanges keyMap={keyMap} />
             <ContextMenu share={share} />
