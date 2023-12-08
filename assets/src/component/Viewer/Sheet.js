@@ -20,11 +20,21 @@ import { toggleSnackbar } from "../../redux/explorer";
 import UseFileSubTitle from "../../hooks/fileSubtitle";
 import { useTranslation } from "react-i18next";
 
+import 'luckysheet/dist/plugins/css/pluginsCss.css';
+import 'luckysheet/dist/plugins/plugins.css';
+import 'luckysheet/dist/css/luckysheet.css';
+import 'luckysheet/dist/assets/iconfont/iconfont.css';
+import luckysheet from 'luckysheet';
+
+// const SheetEditor = React.lazy(() =>
+//     import(/* webpackChunkName: "codeEditor" */ "react-monaco-editor")
+// );
+
 function useQuery() {
     return new URLSearchParams(useLocation().search);
 }
 
-const luckysheet = window.luckysheet;
+// const luckysheet = window.luckysheet;
 
 export default function Sheet() {
 
@@ -74,6 +84,7 @@ export default function Sheet() {
     }, [title]);
 
 
+// Failed to read file content: Cannot read properties of undefined (reading 'create')
 
     useEffect(() => {
         let requestURL = "/file/content/" + query.get("id");
@@ -151,6 +162,8 @@ export default function Sheet() {
         top: '50px'
     }
     return (
+        
+        
         <div>
             <input type={"file"} onChange={(event) => {
                 const files = event.target.files
