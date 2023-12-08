@@ -46,7 +46,7 @@ func (service *ItemSearchService) Search(c *gin.Context) serializer.Response {
 	case "audio":
 		return service.SearchKeywords(c, fs, "%.mp3", "%.flac", "%.ape", "%.wav", "%.acc", "%.ogg", "%.midi", "%.mid")
 	case "doc":
-		return service.SearchKeywords(c, fs, "%.txt", "%.md", "%.pdf", "%.xopp", "%.doc", "%.docx", "%.ppt", "%.pptx", "%.xls", "%.xlsx", "%.pub")
+		return service.SearchKeywords(c, fs, "%.txt", "%.md", "%.pdf", "%.xopp", "%.sheet", "%.doc", "%.docx", "%.ppt", "%.pptx", "%.xls", "%.xlsx", "%.pub")
 	case "tag":
 		if tid, err := hashid.DecodeHashID(service.Keywords, hashid.TagID); err == nil {
 			if tag, err := model.GetTagsByID(tid, fs.User.ID); err == nil {

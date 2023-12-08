@@ -795,6 +795,9 @@ export const openPreview = (share: any) => {
             case "xopp":
                 dispatch(openViewer("xopp", selected[0], isShare));
                 return;
+            case "sheet":
+                dispatch(openViewer("sheet", selected[0], isShare));
+                return;
             case "edit":
                 dispatch(openViewer("text", selected[0], isShare));
                 return;

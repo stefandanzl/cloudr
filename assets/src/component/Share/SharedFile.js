@@ -201,6 +201,13 @@ class SharedFileCompoment extends Component {
                         encodeURIComponent(this.props.share.source.name)
                 );
                 return;
+            case "sheet":
+                this.props.history.push(
+                    this.props.share.key +
+                        "/sheet?name=" +
+                        encodeURIComponent(this.props.share.source.name)
+                );
+                return;
             case "code":
                 this.props.history.push(
                     this.props.share.key +

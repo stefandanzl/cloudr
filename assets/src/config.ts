@@ -15,7 +15,7 @@ export let msDocPreviewSuffix = [
     "pps",
     "doc",
     "docx",
-    "xlsx",
+  //  "xlsx",
     "xls",
 ];
 export const subtitleSuffix = ["ass", "srt", "vrr"];
@@ -23,6 +23,7 @@ export const audioPreviewSuffix = ["mp3", "ogg", "wav", "flac", "m4a"];
 export const videoPreviewSuffix = ["mp4", "mkv", "webm", "avi", "m3u8", "mov"];
 export const pdfPreviewSuffix = ["pdf"];
 export const xournalSuffix = ["xopp"];
+export const sheetSuffix = ["sheet", "xlsx"];
 export const editSuffix = ["md", "txt"];
 export const epubSuffix = ["epub"];
 export const codePreviewSuffix = {
@@ -69,9 +70,10 @@ export const mediaType = {
     ],
     pdf: ["pdf"],
     xournal: ["xopp"],
+    sheet: ["sheet","xlsx"],
     word: ["doc", "docx"],
     ppt: ["ppt", "pptx"],
-    excel: ["xls", "xlsx", "csv"],
+    excel: ["xls",  "csv"],        //"xlsx",
     text: ["txt", "md", "html"],
     torrent: ["torrent"],
     zip: ["zip", "gz", "xz", "tar", "rar", "7z"],
@@ -101,6 +103,8 @@ export const isPreviewable = (name: any) => {
         return "pdf";
     } else if (xournalSuffix.indexOf(suffix) !== -1) {
         return "xopp";
+    } else if (sheetSuffix.indexOf(suffix) !== -1) {
+        return "sheet";
     } else if (Object.keys(codePreviewSuffix).indexOf(suffix) !== -1) {
         return "code";
     } else if (epubSuffix.indexOf(suffix) !== -1) {

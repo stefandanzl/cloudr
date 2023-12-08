@@ -35,6 +35,8 @@ import MusicPlayer from "./component/FileManager/MusicPlayer";
 import EpubViewer from "./component/Viewer/Epub";
 import { useTranslation } from "react-i18next";
 import Xournal from "./component/Download/Xournal"
+import Sheet from "./component/Viewer/Sheet"
+
 
 const PDFViewer = React.lazy(() =>
     import(/* webpackChunkName: "pdf" */ "./component/Viewer/PDF")
@@ -148,6 +150,10 @@ export default function App() {
                                 <Xournal />
                             </AuthRoute>
 
+                            <AuthRoute path={`${path}sheet`} isLogin={isLogin}>
+                                <Sheet />
+                            </AuthRoute>
+
                             <AuthRoute path={`${path}code`} isLogin={isLogin}>
                                 <CodeViewer />
                             </AuthRoute>
@@ -239,6 +245,10 @@ export default function App() {
 
                             <Route path={`${path}s/:id/xopp(/)*`}>
                                  <Xournal />
+                            </Route>
+
+                            <Route path={`${path}s/:id/sheet(/)*`}>
+                                 <Sheet />
                             </Route>
 
                             <Route path={`${path}s/:id/code(/)*`}>
