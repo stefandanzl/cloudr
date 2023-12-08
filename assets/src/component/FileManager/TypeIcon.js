@@ -48,6 +48,10 @@ const icons = {
         color: "#72db72",
         icon: PencilBoxMultiple,
     },
+    sheet: {
+        color: "#4caf50",
+        icon: FileExcelBox,
+    },
     word: {
         color: "#538ce5",
         icon: FileWordBox,
