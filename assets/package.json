@@ -59,6 +59,7 @@
     "jest-environment-jsdom-fourteen": "0.1.0",
     "jest-resolve": "24.9.0",
     "jest-watch-typeahead": "0.4.0",
+    "jquery": "^3.7.1",
     "luckyexcel": "^1.0.1",
     "luckysheet": "^2.1.13",
     "material-ui-toggle-icon": "^1.1.1",
