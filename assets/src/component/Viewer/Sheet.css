@@ -4,3 +4,8 @@
 #luckysheet-input-box{
     color: black !important;
 }
+
+.luckysheet *{
+    color: black !important;
+}
+

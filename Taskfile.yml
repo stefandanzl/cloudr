@@ -74,7 +74,7 @@ tasks:
 
   run_wsl:
     cmds:
-      - "'C:/Program Files/Mozilla Firefox/firefox.exe' --private-window http://172.20.6.222:5214"
+      - "'C:/Program Files/Mozilla Firefox/firefox.exe' --private-window http://localhost:5214"
       - "wsl /mnt/host/c/PROJECTS/GITHUB/cloudr/dev/cloudr"
 
 

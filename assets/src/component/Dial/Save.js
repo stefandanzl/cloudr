@@ -13,15 +13,15 @@ import clsx from "clsx";
 const useStyles = makeStyles((theme) => ({
     fab: {
         margin: 0,
-        // top: "auto",
+        top: "auto",
         // right: 20,
-        // bottom: 20,
+        bottom: 40, //20,
         // left: "auto",
-        top: 84,    // 20+64 = 85px
+        // top: 84,    // 20+64 = 85px
         right: 20,
-        bottom: "auto",
+        // bottom: "auto",
         left: "auto",
-        zIndex: 5,
+        zIndex: 1500,//5,
         position: "fixed",
     },
     badge: {

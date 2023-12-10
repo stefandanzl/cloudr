@@ -21,6 +21,32 @@ import LuckyExcel from "luckyexcel";
 
 import { usePagination } from "../../hooks/pagination";
 import { useSelector } from "react-redux";
+import { makeStyles } from "@material-ui/core/styles";
+
+const useStyles = makeStyles((theme) => ({
+  layout: {
+      marginTop: 0,
+      marginLeft: 0,
+      marginRight: 0,
+      marginBottom: 0,
+      // overflow: "hidden",
+      // width: "100%",
+      // height: "100vh"
+  },
+  "@global": {
+      canvas: {
+          // width: "100% !important",
+          // height: "auto !important",
+          borderRadius: theme.shape.borderRadius,
+      },
+      ".overflow-guard": {
+          borderRadius: "0 0 12px 12px!important",
+      },
+  },
+  paper: {
+      marginBottom: theme.spacing(3),
+  },
+}));
 
 function useQuery() {
     return new URLSearchParams(useLocation().search);
@@ -44,7 +70,7 @@ export default function Luckysheet()  {
    const query = useQuery();
    const { id } = useParams();
    const theme = useTheme();
-   const { title } = UseFileSubTitle(query, match, location);
+   const { title, path } = UseFileSubTitle(query, match, location);
 
    const dispatch = useDispatch();
    const ToggleSnackbar = useCallback(
@@ -56,7 +82,7 @@ export default function Luckysheet()  {
   const [luckysheetRef, setLuckysheetRef] = useState(null)
 
   const selected = useSelector((state) => state.explorer.selected);
-  const path = useSelector((state) => state.navigator.path);
+  const pathN = useSelector((state) => state.navigator.path);
   const [contentState, setContentState] = useState("unchanged");
 
   const { dirList, fileList, startIndex } = usePagination();
@@ -146,51 +172,68 @@ export default function Luckysheet()  {
 
   const excelSaveSheet = () =>{
     
-    
-    if (!selected.length === 0) { 
-        console.log("NOTHING SELECTED!")
-        return}
-    // if (!selected.length > 0) {
-        const target = selected[0];
-        const rawPath = target.path;
-        // const basePath = rawPath.slice(1);
-        const fileName = target.name;
-        const sheetName = fileName.replace("xslx", "sheet")
-        const filePath = path.join(rawPath, sheetName);
-        console.log(filePath)
-        // setUrl(filePath)
+          // location.pathname is wrong because it's like /sheet?p= ...
 
-    //   }else {
-    //     console.log("Nothing selected?"); 
-    //     return
-    // }
-        // if (dirList.includes(sheetName)) {
-        //     console.log(`${sheetName} is in the array.`);
-        //   } else {
-        //     console.log(`${sheetName} is not in the array.`);
-        //   }
-          
-          const foundObject = dirList.find((item) => item.name === sheetName);
-        //  const sheetFile = dirList.findIndex((value) => { return value.name === sheetName; })
-    if (foundObject) {
-        // this.props.toggleSnackbar( "top", "right", this.props.t("modals.duplicatedFolderName"), "warning" );
-        // this.props.setModalsLoading(false);
-        console.log(foundObject.id)
-        save(foundObject.id)
+      const sheetName = title.replace(".xlsx", ".sheet")
+      console.log("SHEETNAME: ",sheetName)
+      console.log("PATH: ",path)
+      let directory = path.split("/")
+      directory.pop()
+      directory = directory.join("/") 
 
-    } else {
-        API.post("/file/create", { path: (this.props.path === "/" ? "" : this.props.path) + "/" + this.state.newFileName, })
-            .then(() => {
-                const foundObject = dirList.find((item) => item.name === sheetName);
-                if(foundObject){
+      const filePath = directory + "/" + sheetName //path.join(path, sheetName);
+      console.log("FILEPATH",filePath)
+      
+       
+
+      // JSON.parse(response.content.text)
+      API.get("/directory"+ encodeURIComponent(directory), { responseType: "text" })
+      .then((response) => {
+        console.log(response) 
+        // const resObject = JSON.parse(response)
+        const dirObjects = response.data.objects
+        const foundObject = dirObjects.find((item) => item.name === sheetName);
+        
+        if (foundObject) {
+          // this.props.toggleSnackbar( "top", "right", this.props.t("modals.duplicatedFolderName"), "warning" );
+          // this.props.setModalsLoading(false);
+          console.log("FOUND-ID ",foundObject.id)
+          save(foundObject.id)
+  
+        } else {
+          API.post("/file/create", { path:  directory + "/" + sheetName })
+              .then(() => {
+                API.get("/directory"+ encodeURIComponent(directory), { responseType: "text" })
+                .then((response) => {
+                  const dirObjects = response.data.objects
+                  console.log("FileLIST:",dirObjects)  
+                  const foundObject = dirObjects.find((item) => item.name === sheetName);
+                  if(foundObject){
+                    console.log("FOUND: ",foundObject)  
                     save(foundObject.id)
-                }
-            })
-            .catch((error) => {
-                // this.props.setModalsLoading(false);
-                this.props.toggleSnackbar( "top", "right", error.message, "error" );
-            });
-    }
+                  } else {
+                    console.log("NO FOUND FILE !")
+                  }
+                }).catch((error)=>{
+                  console.log("ERROR GET-CREATE", error.message);
+                })
+              })
+              .catch((error) => {
+                  // this.props.setModalsLoading(false);
+                  console.log("ERROR CREATE",error.message)
+                  ToggleSnackbar( "top", "right", error.message, "error" );
+              });
+      }
+ 
+      }).catch((error) => {
+        // this.props.setModalsLoading(false);
+        console.log("ERROR RESPONSE",error.message)
+        ToggleSnackbar( "top", "right", error.message, "error" );
+      });
+
+        // const foundObject = fileList.find((item) => item.name === sheetName);
+        // const sheetFile = dirList.findIndex((value) => { return value.name === sheetName; })
+    
   }
 
   
@@ -292,7 +335,7 @@ const saveProcess = () =>{
 
 useEffect(()=>{
     if(!luckysheetRef && window.luckysheet){
-    setLuckysheetRef(luckysheet)
+    setLuckysheetRef(window.luckysheet)
     setScriptLoaded(true)
     }
     console.log(luckysheetRef)
@@ -304,8 +347,8 @@ useEffect(()=>{
 // Failed to read file content: Cannot read properties of undefined (reading 'create')
 
 useEffect(() => {
-    if (luckysheetRef && suffix){
-
+    if (luckysheetRef && suffix && !showDiv){
+        setShowDiv(true)
         const options = {
             data: [
                 {
@@ -358,7 +401,7 @@ useEffect(() => {
             console.log("no luckysheet yet to destroy")
         }
         const luckysheet = luckysheetRef
-        setShowDiv(true)
+        // setShowDiv(true)
 
     let requestURL = "/file/content/" + query.get("id");
     if (pathHelper.isSharePage(location.pathname)) {
@@ -399,7 +442,7 @@ useEffect(() => {
                 title: 'Luckysheet Cloudr', // set the name of the table
                 data: dataObject, //: [textdata],
                 // plugins:['chart'],
-                // showinfobar: false,
+                showinfobar: false,
                 // ...options,
             })
             } else if (suffix === "xlsx"){
@@ -413,10 +456,10 @@ useEffect(() => {
 
                     luckysheet.create({
                         container: 'luckysheetDiv', //luckysheet is the container id
-                        showinfobar:false,
-                        data:exportJson.sheets,
-                        title:exportJson.info.name,
-                        userInfo:exportJson.info.name.creator,
+                        showinfobar: false,
+                        data: exportJson.sheets,
+                        // title: exportJson.info.name,
+                        // userInfo: exportJson.info.name.creator,
                         // ...options,
                     });
                 });
@@ -458,7 +501,7 @@ useEffect(() => {
     }
     };
     // eslint-disable-next-line
-}, [suffix, luckysheetRef, scriptLoaded, window.luckysheet, match.params[0]]);
+}, [suffix, luckysheetRef, showDiv, match.params[0]]);
 
 
   
@@ -475,11 +518,12 @@ useEffect(() => {
     color: "black !important",
   };
 
+  const classes = useStyles();
   return (
-    <>
+    <div className={classes.layout}>
     <SaveButton onClick={saveProcess} status={status} />
     {showDiv && <div id="luckysheetDiv" style={luckyCss}></div>}
-    </>
+    </div>
   )
 }
 
