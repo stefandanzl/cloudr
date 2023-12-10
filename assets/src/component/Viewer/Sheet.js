@@ -60,6 +60,7 @@ export default function Luckysheet()  {
   const [contentState, setContentState] = useState("unchanged");
 
   const { dirList, fileList, startIndex } = usePagination();
+  const [showDiv, setShowDiv] = useState(false)
 
   // Function to encode consecutive nulls with a custom placeholder
   function encodeNulls(inputString) {
@@ -109,9 +110,7 @@ export default function Luckysheet()  {
 
 
   const save = async (id) => {
-    if(!id){
-        const id = query.get("id")
-    }
+    id = id || query.get("id");
     try {
         if (!luckysheetRef) {
             // Handle the case where pdfInstance is not available yet
@@ -124,9 +123,10 @@ export default function Luckysheet()  {
         const sheetObject = await luckysheetRef.getAllSheets();
         const jsonString = JSON.stringify(sheetObject);
         const encodedJsonString = encodeNulls(jsonString);
-        const blob = new Blob([encodedJsonString], { type: "application/json" });
+        // const blob = new Blob([encodedJsonString], { type: "application/json" });
 
-        API.put("/file/update/" + id, blob)
+
+        API.put("/file/update/" + id, encodedJsonString)
             .then(() => {
                 setContentState((prev) => { return "unchanged" });
                 console.log("saved successfully!");
@@ -283,16 +283,28 @@ const saveProcess = () =>{
   useEffect(() => {
     const extension = title.split(".");
     console.log(extension)
-    setSuffix(sheetSuffix[extension.pop()]);
+    // setSuffix(sheetSuffix[extension.pop()]);
+    setSuffix(extension.pop());
     console.log(suffix)
     // eslint-disable-next-line
 }, [title]);
 
 
+useEffect(()=>{
+    if(!luckysheetRef && window.luckysheet){
+    setLuckysheetRef(luckysheet)
+    setScriptLoaded(true)
+    }
+    console.log(luckysheetRef)
+    console.log(suffix)
+
+},[window.luckysheet, luckysheetRef, suffix])
+
+
 // Failed to read file content: Cannot read properties of undefined (reading 'create')
 
 useEffect(() => {
-    if (scriptLoaded){
+    if (luckysheetRef && suffix){
 
         const options = {
             data: [
@@ -338,33 +350,57 @@ useEffect(() => {
             
         }
 
-    const luckysheet = window.luckysheet;
-    setLuckysheetRef(luckysheet)
+    // const luckysheet = window.luckysheet;
+    // setLuckysheetRef(luckysheet)
+        try{
+            luckysheetRef.destroy()
+        } catch{
+            console.log("no luckysheet yet to destroy")
+        }
+        const luckysheet = luckysheetRef
+        setShowDiv(true)
+
     let requestURL = "/file/content/" + query.get("id");
     if (pathHelper.isSharePage(location.pathname)) {
-        requestURL = "/share/content/" + id;
+        requestURL = "/share/content/" + query.get("id");
         if (query.get("share_path") !== "") {
-            requestURL +=
-                "?path=" + encodeURIComponent(query.get("share_path"));
+            requestURL += "?path=" + encodeURIComponent(query.get("share_path"));
         }
     }
+    console.log(requestURL)
 
     setLoading(true);
     API.get(requestURL, { responseType: "arraybuffer" })
         .then((response) => {
+            console.log(JSON.stringify(response))
             const buffer = new Buffer(response.rawData, "binary");
             
             if (suffix === "sheet"){
             const encodedTextdata = buffer.toString(); // for string
-            const textdata = decodeNulls(encodedTextdata);
-            setContent(textdata);
+            const dataString = decodeNulls(encodedTextdata);
+            
+            let dataObject;
+            if(dataString){
+            try {
+                dataObject = JSON.parse(dataString);
+                console.log(dataObject);
+              } catch (error) {
+                console.error('Error parsing JSON:', error);
+
+              }
+            } else {
+                dataObject = options.data
+            }
+            setContent(dataObject);
+            
+
                 luckysheet.create({
-                container: "luckysheet",
+                container: "luckysheetDiv",
                 title: 'Luckysheet Cloudr', // set the name of the table
-                data: [textdata],
+                data: dataObject, //: [textdata],
                 // plugins:['chart'],
                 // showinfobar: false,
-                ...options,
+                // ...options,
             })
             } else if (suffix === "xlsx"){
                 LuckyExcel.transformExcelToLucky(buffer, function(exportJson, luckysheetfile){
@@ -373,23 +409,26 @@ useEffect(() => {
                         alert("Failed to read the content of the excel file, currently does not support xls files!");
                         return;
                     }
-                    luckysheet.destroy();
+                    // luckysheet.destroy();
 
                     luckysheet.create({
-                        container: 'luckysheet', //luckysheet is the container id
+                        container: 'luckysheetDiv', //luckysheet is the container id
                         showinfobar:false,
                         data:exportJson.sheets,
                         title:exportJson.info.name,
                         userInfo:exportJson.info.name.creator,
-                        ...options,
+                        // ...options,
                     });
                 });
 
             } else {
-                console.log("Unknown file format!");
+                console.log("Unknown file format! ",suffix);
             }
         })
         .catch((error) => {
+            console.log("ERROR:",error.message)
+            console.log("SUFFIX:", suffix)
+            console.log("PATHNAME:", location.pathname)
             ToggleSnackbar(
                 "top",
                 "right",
@@ -402,9 +441,24 @@ useEffect(() => {
         .then(() => {
             setLoading(false);
         });
+    } else {
+        console.log(
+            luckysheetRef, window.luckysheet, scriptLoaded
+        )
     }
+   
+    return () => {
+        if(luckysheetRef){
+        try{
+        luckysheetRef.destroy()
+        }catch(error){
+            console.log("Error destroying luckysheet return")
+            // console.error(error);
+        }
+    }
+    };
     // eslint-disable-next-line
-}, [scriptLoaded,match.params[0]]);
+}, [suffix, luckysheetRef, scriptLoaded, window.luckysheet, match.params[0]]);
 
 
   
@@ -424,7 +478,7 @@ useEffect(() => {
   return (
     <>
     <SaveButton onClick={saveProcess} status={status} />
-    <div id="luckysheetDiv" style={luckyCss}></div>
+    {showDiv && <div id="luckysheetDiv" style={luckyCss}></div>}
     </>
   )
 }

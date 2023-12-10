@@ -72,6 +72,12 @@ tasks:
 
 #######
 
+  run_wsl:
+    cmds:
+      - "'C:/Program Files/Mozilla Firefox/firefox.exe' --private-window http://172.20.6.222:5214"
+      - "wsl /mnt/host/c/PROJECTS/GITHUB/cloudr/dev/cloudr"
+
+
   run:
     dir: dev
     cmds:
@@ -98,6 +104,14 @@ tasks:
       - task: firefox
       - task: finished
       - task: go_run
+
+  fulll:
+    cmds:
+      - cmd: task yarn_build || messagebox "React compilation Error!"
+      - task: zip
+      - task: build_linux
+      - task: finished
+      - task: run_wsl
 
   full:
     cmds:
