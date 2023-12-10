@@ -71,6 +71,9 @@ tasks:
 
 
 #######
+  h:
+    cmds:
+      - task: --list-all
 
   run_wsl:
     cmds:

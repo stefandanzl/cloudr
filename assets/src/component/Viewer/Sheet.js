@@ -446,10 +446,17 @@ useEffect(() => {
                 // ...options,
             })
             } else if (suffix === "xlsx"){
+              try {
                 LuckyExcel.transformExcelToLucky(buffer, function(exportJson, luckysheetfile){
 
                     if(exportJson.sheets==null || exportJson.sheets.length===0){
-                        alert("Failed to read the content of the excel file, currently does not support xls files!");
+                        //alert("Failed to read the content of the excel file, currently does not support xls files!");
+                        ToggleSnackbar(
+                          "top",
+                          "right",
+                          "Failed to read the content of the excel file, currently does not support xls files!",
+                          "error"
+                      );
                         return;
                     }
                     // luckysheet.destroy();
@@ -462,7 +469,16 @@ useEffect(() => {
                         // userInfo: exportJson.info.name.creator,
                         // ...options,
                     });
-                });
+                })} catch (error) {
+                  console.log("EXCEL CONVERT ERROR: ", error.message)
+                  ToggleSnackbar(
+                      "top",
+                      "right",
+                      "Improper Excel file!",
+                      "error"
+                  );
+                }
+                
 
             } else {
                 console.log("Unknown file format! ",suffix);
