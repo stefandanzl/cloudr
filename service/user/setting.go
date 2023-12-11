@@ -9,11 +9,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+	"github.com/pquerna/otp/totp"
 	model "github.com/stefandanzl/cloudr/models"
 	"github.com/stefandanzl/cloudr/pkg/serializer"
 	"github.com/stefandanzl/cloudr/pkg/util"
-	"github.com/gin-gonic/gin"
-	"github.com/pquerna/otp/totp"
 )
 
 // SettingService 通用设置服务
@@ -30,12 +30,12 @@ type AvatarService struct {
 	Size string `uri:"size" binding:"required,eq=l|eq=m|eq=s"`
 }
 
-// SettingUpdateService 设定更改服务
+// ################          settings change service           SettingUpdateService 设定更改服务
 type SettingUpdateService struct {
-	Option string `uri:"option" binding:"required,eq=nick|eq=theme|eq=homepage|eq=vip|eq=qq|eq=policy|eq=password|eq=2fa|eq=authn"`
+	Option string `uri:"option" binding:"required,eq=nick|eq=theme|eq=homepage|eq=vip|eq=qq|eq=policy|eq=password|eq=2fa|eq=authn|eq=pdf"`
 }
 
-// OptionsChangeHandler 属性更改接口
+// Property change interface      ######################            OptionsChangeHandler 属性更改接口
 type OptionsChangeHandler interface {
 	Update(*gin.Context, *model.User) serializer.Response
 }
@@ -76,7 +76,20 @@ type ThemeChose struct {
 	Theme string `json:"theme" binding:"required,hexcolor|rgb|rgba|hsl"`
 }
 
-// Update 更新主题设定
+type PdfSettingsService struct {
+	PdfSettings model.PdfSettings `json:"pdf"`
+}
+
+func (service *PdfSettingsService) Update(c *gin.Context, user *model.User) serializer.Response {
+	user.OptionsSerialized.PdfSettings = service.PdfSettings
+	if err := user.UpdateOptions(); err != nil {
+		return serializer.DBErr("Failed to update user preferences", err)
+	}
+
+	return serializer.Response{}
+}
+
+// Update theme settings     Update 更新主题设定
 func (service *ThemeChose) Update(c *gin.Context, user *model.User) serializer.Response {
 	user.OptionsSerialized.PreferredTheme = service.Theme
 	if err := user.UpdateOptions(); err != nil {
@@ -86,13 +99,13 @@ func (service *ThemeChose) Update(c *gin.Context, user *model.User) serializer.R
 	return serializer.Response{}
 }
 
-// Update 删除凭证
+// Delete credentials      Update 删除凭证
 func (service *DeleteWebAuthn) Update(c *gin.Context, user *model.User) serializer.Response {
 	user.RemoveAuthn(service.ID)
 	return serializer.Response{}
 }
 
-// Update 更改二步验证设定
+// Change 2-step verification settings     Update 更改二步验证设定
 func (service *Enable2FA) Update(c *gin.Context, user *model.User) serializer.Response {
 	if user.TwoFactor == "" {
 		// 开启2FA
@@ -137,7 +150,7 @@ func (service *SettingService) Init2FA(c *gin.Context, user *model.User) seriali
 	return serializer.Response{Data: key.Secret()}
 }
 
-// Update 更改密码
+// change password    Update 更改密码
 func (service *PasswordChange) Update(c *gin.Context, user *model.User) serializer.Response {
 	// 验证老密码
 	if ok, _ := user.CheckPassword(service.Old); !ok {
@@ -153,7 +166,7 @@ func (service *PasswordChange) Update(c *gin.Context, user *model.User) serializ
 	return serializer.Response{}
 }
 
-// Update 切换个人主页开关
+// Toggle personal home page switch     Update 切换个人主页开关
 func (service *HomePage) Update(c *gin.Context, user *model.User) serializer.Response {
 	user.OptionsSerialized.ProfileOff = !service.Enabled
 	if err := user.UpdateOptions(); err != nil {
@@ -163,7 +176,7 @@ func (service *HomePage) Update(c *gin.Context, user *model.User) serializer.Res
 	return serializer.Response{}
 }
 
-// Update 更改昵称
+// Change nickname         Update 更改昵称
 func (service *ChangerNick) Update(c *gin.Context, user *model.User) serializer.Response {
 	if err := user.Update(map[string]interface{}{"nick": service.Nick}); err != nil {
 		return serializer.DBErr("Failed to update user", err)
@@ -172,7 +185,7 @@ func (service *ChangerNick) Update(c *gin.Context, user *model.User) serializer.
 	return serializer.Response{}
 }
 
-// Get 获取用户头像
+// Get user avatar          Get 获取用户头像
 func (service *AvatarService) Get(c *gin.Context) serializer.Response {
 	// 查找目标用户
 	uid, _ := c.Get("object_id")
@@ -241,7 +254,7 @@ func (service *SettingListService) ListTasks(c *gin.Context, user *model.User) s
 	return serializer.BuildTaskList(tasks, total)
 }
 
-// Settings 获取用户设定
+// Get user settings          Settings 获取用户设定
 func (service *SettingService) Settings(c *gin.Context, user *model.User) serializer.Response {
 	return serializer.Response{
 		Data: map[string]interface{}{
@@ -251,6 +264,7 @@ func (service *SettingService) Settings(c *gin.Context, user *model.User) serial
 			"prefer_theme": user.OptionsSerialized.PreferredTheme,
 			"themes":       model.GetSettingByName("themes"),
 			"authn":        serializer.BuildWebAuthnList(user.WebAuthnCredentials()),
+			"pdf":          user.OptionsSerialized.PdfSettings,
 		},
 	}
 }

@@ -8,9 +8,9 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/stefandanzl/cloudr/pkg/util"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
+	"github.com/stefandanzl/cloudr/pkg/util"
 )
 
 const (
@@ -26,7 +26,7 @@ const (
 
 // User 用户模型
 type User struct {
-	// 表字段
+	// Table field 表字段
 	gorm.Model
 	Email     string `gorm:"type:varchar(100);unique_index"`
 	Nick      string `gorm:"size:50"`
@@ -39,11 +39,11 @@ type User struct {
 	Options   string `json:"-" gorm:"size:4294967295"`
 	Authn     string `gorm:"size:4294967295"`
 
-	// 关联模型
-	Group  Group  `gorm:"save_associations:false:false"`
+	// association model 关联模型
+	Group  Group  `gorm:"save_associations:false:false"` //POSSIBLE MISTAKE!
 	Policy Policy `gorm:"PRELOAD:false,association_autoupdate:false"`
 
-	// 数据库忽略字段
+	// Database ignores fields 数据库忽略字段
 	OptionsSerialized UserOption `gorm:"-"`
 }
 
@@ -51,20 +51,30 @@ func init() {
 	gob.Register(User{})
 }
 
-// UserOption 用户个性化配置字段
+// User personalized configuration fields     UserOption 用户个性化配置字段
 type UserOption struct {
-	ProfileOff     bool   `json:"profile_off,omitempty"`
-	PreferredTheme string `json:"preferred_theme,omitempty"`
+	ProfileOff     bool        `json:"profile_off,omitempty"`
+	PreferredTheme string      `json:"preferred_theme,omitempty"`
+	PdfSettings    PdfSettings `json:"pdf,omitempty"`
 }
 
-// Root 获取用户的根目录
+// PDF settings
+type PdfSettings struct {
+	PagesID          string `json:"pagesId"`
+	Autosave         bool   `json:"autosave"`
+	SaveButton       bool   `json:"saveButton"`
+	AutosaveInterval int    `json:"autosaveInterval"`
+	ChangePrompt     bool   `json:"changePrompt"`
+}
+
+// Get the user's root directory   Root 获取用户的根目录
 func (user *User) Root() (*Folder, error) {
 	var folder Folder
 	err := DB.Where("parent_id is NULL AND owner_id = ?", user.ID).First(&folder).Error
 	return &folder, err
 }
 
-// DeductionStorage 减少用户已用容量
+// Reduce the user's used capacity     DeductionStorage 减少用户已用容量
 func (user *User) DeductionStorage(size uint64) bool {
 	if size == 0 {
 		return true
@@ -74,7 +84,7 @@ func (user *User) DeductionStorage(size uint64) bool {
 		DB.Model(user).Update("storage", gorm.Expr("storage - ?", size))
 		return true
 	}
-	// 如果要减少的容量超出已用容量，则设为零
+	// If the capacity to be reduced exceeds the used capacity, set to zero     如果要减少的容量超出已用容量，则设为零
 	user.Storage = 0
 	DB.Model(user).Update("storage", 0)
 
@@ -161,7 +171,7 @@ func GetActiveUserByEmail(email string) (User, error) {
 	return user, result.Error
 }
 
-// NewUser 返回一个新的空 User
+// Returns a new empty User     NewUser 返回一个新的空 User
 func NewUser() User {
 	options := UserOption{}
 	return User{
@@ -169,15 +179,15 @@ func NewUser() User {
 	}
 }
 
-// BeforeSave Save用户前的钩子
+// Save user hook   BeforeSave Save用户前的钩子
 func (user *User) BeforeSave() (err error) {
 	err = user.SerializeOptions()
 	return err
 }
 
-// AfterCreate 创建用户后的钩子
+// Hook after user creation      AfterCreate 创建用户后的钩子
 func (user *User) AfterCreate(tx *gorm.DB) (err error) {
-	// 创建用户的默认根目录
+	// Create a user's default root directory  创建用户的默认根目录
 	defaultFolder := &Folder{
 		Name:    "/",
 		OwnerID: user.ID,
@@ -186,19 +196,19 @@ func (user *User) AfterCreate(tx *gorm.DB) (err error) {
 	return err
 }
 
-// AfterFind 找到用户后的钩子
+// Hook after finding the user       AfterFind 找到用户后的钩子
 func (user *User) AfterFind() (err error) {
-	// 解析用户设置到OptionsSerialized
+	// Parse user settings into OptionsSerialized     解析用户设置到OptionsSerialized
 	if user.Options != "" {
 		err = json.Unmarshal([]byte(user.Options), &user.OptionsSerialized)
 	}
 
-	// 预加载存储策略
+	// Preload storage policy     预加载存储策略
 	user.Policy, _ = GetPolicyByID(user.GetPolicyID(0))
 	return err
 }
 
-//SerializeOptions 将序列后的Option写入到数据库字段
+// Write the Option after the sequence to the database field      SerializeOptions 将序列后的Option写入到数据库字段
 func (user *User) SerializeOptions() (err error) {
 	optionsValue, err := json.Marshal(&user.OptionsSerialized)
 	user.Options = string(optionsValue)
@@ -276,12 +286,12 @@ func (user *User) SetStatus(status int) {
 	DB.Model(&user).Update("status", status)
 }
 
-// Update 更新用户
+// Update user    Update 更新用户
 func (user *User) Update(val map[string]interface{}) error {
 	return DB.Model(user).Updates(val).Error
 }
 
-// UpdateOptions 更新用户偏好设定
+// Update user preferences     UpdateOptions 更新用户偏好设定
 func (user *User) UpdateOptions() error {
 	if err := user.SerializeOptions(); err != nil {
 		return err

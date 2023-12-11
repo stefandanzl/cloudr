@@ -497,6 +497,15 @@
     "loginApp": "You can start using the iOS App now. If you encounter problems with the QR Code, you can also try to manually enter your username and password to log in.",
     "aboutCloudr": "About Cloudr",
     "githubRepo": "GitHub Repository",
-    "homepage": "Homepage"
+    "homepage": "Homepage",
+    "pdfEditor": "PDF Editor",
+    "pdfPagesId": "Persistent PDF page storage file id",
+    "pdfAutoSave": "Enable Autosave",
+    "pdfAutoSaveInterval": "Autosave interval in seconds",
+    "changePrompt": "Enable change prompt",
+    "pdfSaveButton": "Enable Save button",
+    "changePdfPagesId":"Enter valid file id for textfile",
+    "changeAutosaveInterval":"Enter the desired Autosave interval in seconds",
+    "pdfChanged":"PDF Settings changed successfully"
   }
 }

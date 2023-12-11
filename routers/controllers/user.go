@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/duo-labs/webauthn/webauthn"
+	"github.com/gin-gonic/gin"
 	model "github.com/stefandanzl/cloudr/models"
 	"github.com/stefandanzl/cloudr/pkg/authn"
 	"github.com/stefandanzl/cloudr/pkg/request"
@@ -11,8 +13,6 @@ import (
 	"github.com/stefandanzl/cloudr/pkg/thumb"
 	"github.com/stefandanzl/cloudr/pkg/util"
 	"github.com/stefandanzl/cloudr/service/user"
-	"github.com/duo-labs/webauthn/webauthn"
-	"github.com/gin-gonic/gin"
 )
 
 // StartLoginAuthn 开始注册WebAuthn登录
@@ -244,7 +244,7 @@ func UserTasks(c *gin.Context) {
 	}
 }
 
-// UserSetting 获取用户设定
+// Get user settings    UserSetting 获取用户设定
 func UserSetting(c *gin.Context) {
 	var service user.SettingService
 	if err := c.ShouldBindUri(&service); err == nil {
@@ -327,7 +327,7 @@ func GetUserAvatar(c *gin.Context) {
 	}
 }
 
-// UpdateOption 更改用户设定
+// Change user settings                           UpdateOption 更改用户设定
 func UpdateOption(c *gin.Context) {
 	var service user.SettingUpdateService
 	if err := c.ShouldBindUri(&service); err == nil {
@@ -349,6 +349,8 @@ func UpdateOption(c *gin.Context) {
 			subService = &user.DeleteWebAuthn{}
 		case "theme":
 			subService = &user.ThemeChose{}
+		case "pdf":
+			subService = &user.PdfSettingsService{}
 		default:
 			subService = &user.ChangerNick{}
 		}

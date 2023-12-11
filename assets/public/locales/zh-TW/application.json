@@ -497,6 +497,15 @@
     "loginApp": "完成綁定，你可以開始使用 iOS 客戶端了。如果掃碼綁定遇到問題，你也可以嘗試手動輸入用戶名和密碼登入。",
     "aboutCloudr": "關於 Cloudr",
     "githubRepo": "GitHub 倉庫",
-    "homepage": "主頁"
+    "homepage": "主頁",
+    "pdfEditor": "PDF Editor",
+    "pdfPagesId": "Persistant PDF page storage file id",
+    "pdfAutoSave": "Enable Autosave",
+    "pdfAutoSaveInterval": "Autosave interval in seconds",
+    "changePrompt": "Enable change prompt",
+    "pdfSaveButton": "Enable Save button",
+    "changePdfPagesId":"Enter valid file id for textfile",
+    "changeAutosaveInterval":"Enter the desired Autosave interval in seconds",
+    "pdfChanged":"PDF Settings changed successfully"
   }
 }

@@ -131,7 +131,7 @@ func TestDownload_GetOwner(t *testing.T) {
 		asserts.Equal("nick", user.Nick)
 	}
 
-	// 无User对象
+	// No User object      无User对象
 	{
 		download := &Download{UserID: 3}
 		mock.ExpectQuery("SELECT(.+)").WillReturnRows(sqlmock.NewRows([]string{"nick"}).AddRow("nick"))

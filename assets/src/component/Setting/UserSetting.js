@@ -64,6 +64,15 @@ import { Trans, withTranslation } from "react-i18next";
 import { selectLanguage } from "../../redux/viewUpdate/action";
 import OptionSelector from "../Modals/OptionSelector";
 
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import SaveIcon from '@mui/icons-material/Save';
+import BookIcon from '@mui/icons-material/Book';
+import UploadFileIcon from '@mui/icons-material/UploadFile';
+import SdCardAlertIcon from '@mui/icons-material/SdCardAlert';
+import CloudSyncIcon from '@mui/icons-material/CloudSync';
+import PriorityHighIcon from '@mui/icons-material/PriorityHigh';
+
 const styles = (theme) => ({
     layout: {
         width: "auto",
@@ -204,6 +213,13 @@ class UserSettingCompoment extends Component {
     constructor(props) {
         super(props);
         this.fileInput = React.createRef();
+        this.state.settings.pdf = {
+            pagesId: "",
+            autosave: false,
+            saveButton: false,
+            autosaveInterval: 0,
+            changePrompt: false,
+        }
     }
 
     state = {
@@ -224,7 +240,12 @@ class UserSettingCompoment extends Component {
         changeWebDavPwd: false,
         groupBackModal: false,
         changePolicy: false,
+        pagesIdModal: false,
+        pdfAutosaveIntervalModal: false,
         changeTimeZone: false,
+        pdfAutosaveInterval: "",
+        pdfPagesId: "",
+        
         settings: {
             uid: 0,
             group_expires: 0,
@@ -242,6 +263,13 @@ class UserSettingCompoment extends Component {
             prefer_theme: "",
             themes: {},
             authn: [],
+            pdf: {
+                pagesId: "",
+                autosave: false,
+                saveButton: false,
+                autosaveInterval: 0,
+                changePrompt: false,
+            },
         },
     };
 
@@ -258,6 +286,8 @@ class UserSettingCompoment extends Component {
             changeWebDavPwd: false,
             groupBackModal: false,
             changePolicy: false,
+            pagesIdModal: false,
+            pdfAutosaveIntervalModal: false,
         });
     };
 
@@ -284,6 +314,19 @@ class UserSettingCompoment extends Component {
                 this.setState({
                     settings: response.data,
                 });
+                if (!response.data.pdf){
+                    this.setState((prevState) => ({
+                        settings: { ...prevState.settings,
+                            pdf: {
+                            pagesId: "",
+                            autosave: true,
+                            saveButton: true,
+                            autosaveInterval: 10,
+                            changePrompt: true,
+                        }
+                    }
+                    }))
+                }
             })
             .catch((error) => {
                 this.props.toggleSnackbar(
@@ -356,6 +399,48 @@ class UserSettingCompoment extends Component {
             });
     };
 
+
+
+
+
+    changePdf = () => {
+        this.setState({
+            loading: "pdf",
+        });
+        
+
+        API.patch("/user/setting/pdf", {
+            pdf: this.state.settings.pdf,
+        })
+            .then(() => {
+                this.props.toggleSnackbar(
+                    "top",
+                    "right",
+                    this.props.t("setting.pdfChanged"),
+                    "success"
+                );
+                this.setState({
+                    loading: "",
+                });
+                this.handleClose();
+            })
+            .catch((error) => {
+                this.props.toggleSnackbar(
+                    "top",
+                    "right",
+                    error.message,
+                    "error"
+                );
+                this.setState({
+                    loading: "",
+                });
+            });
+    };
+
+
+
+
+
     uploadAvatar = () => {
         this.setState({
             loading: "avatar",
@@ -391,7 +476,7 @@ class UserSettingCompoment extends Component {
             });
     };
 
-    handleToggle = () => {
+    handleToggleHome = () => {
         API.patch("/user/setting/homepage", {
             status: !this.state.settings.homepage,
         })
@@ -418,6 +503,124 @@ class UserSettingCompoment extends Component {
                 );
             });
     };
+
+    // handleTogglePdfAutosave = () => {
+    //     this.setState({
+    //         settings: {
+    //             ...this.state.settings,
+    //             pdf: { ...this.state.settings.pdf, 
+    //                 autosave: !this.state.settings.pdf.autosave 
+    //             }
+    //         },
+    //     });
+        
+    //     this.changePdf()
+
+    // };
+
+    // handleTogglePdf = (name) => (event) => {
+    //     this.setState((prevState) => ({
+    //         [name]: !prevState[name],
+    //     }));
+    //     this.changePdf()
+    // };
+
+    // handleTogglePdfChangePrompt = ()
+
+    // handleTogglePdfSaveButton = ()
+
+    changePdfpagesId = () => {
+        this.setState((prevState) => ({
+            settings: {
+                ...prevState.settings,
+                pdf: {
+                    ...prevState.settings.pdf,
+                    pagesId: this.state.pdfPagesId,
+                },
+            },
+        }), () => {
+            // Additional logic after state update (if needed)
+            this.changePdf()
+            
+        });
+    }
+
+
+    changeAutosaveInterval = () => {
+        try {
+            const newAutosaveInterval = parseInt(this.state.pdfAutosaveInterval, 10);
+            if (!isNaN(newAutosaveInterval)) {
+            
+                this.setState((prevState) => ({
+                settings: {
+                    ...prevState.settings,
+                    pdf: {
+                        ...prevState.settings.pdf,
+                        autosaveInterval: newAutosaveInterval,
+                    },
+                },
+            }), () => {
+                // Additional logic after state update (if needed)
+                this.changePdf()
+            });
+        } else {
+            console.log("Not A NUMBER??")
+        }} catch (error){
+            console.log("Int conversion error!", error.message)
+            this.props.toggleSnackbar(
+                    "top",
+                    "right",
+                    "Input must be integer, bigger than 0 ", //error.message,
+                    "error"
+                );
+            
+        }
+        
+    
+    }
+
+    handleTogglePdf = (name) => (event) => {
+        this.setState((prevState) => ({
+            settings: {
+                ...prevState.settings,
+                pdf: {
+                    ...prevState.settings.pdf,
+                    [name]: !prevState.settings.pdf[name],
+                },
+            },
+        }), () => {
+            // This callback will be called after the state is updated
+            this.changePdf();
+        });
+
+
+    };
+
+    // handleChangePdf = (name) => (event) => {
+    //     this.setState((prevState, event) => ({
+    //         settings: {
+    //             ...prevState.settings,
+    //             pdf: {
+    //                 ...prevState.settings.pdf,
+    //                 [name]: event.target.value,
+    //             },
+    //         },
+    //     }));
+    // };
+    
+    handleChangePdf = (name) => (event) => {
+        const { settings } = this.state;
+        this.setState({
+            settings: {
+                ...settings,
+                pdf: {
+                    ...settings.pdf,
+                    [name]: event.target.value,
+                },
+            },
+        });
+    };
+
 
     changhePwd = () => {
         if (this.state.newPwd !== this.state.newPwdRepeat) {
@@ -740,6 +943,217 @@ class UserSettingCompoment extends Component {
                             </ListItem>
                         </List>
                     </Paper>
+
+
+
+
+{/*   #############################################            PDF SETTINGS        CUSTOM CODE      #####################################     */}
+
+                { this.state.settings.pdf &&  (<> <Typography
+                        className={classes.sectionTitle}
+                        variant="subtitle2"
+                    >
+                      {t("setting.pdfEditor")}
+                    </Typography>
+                    <Paper>
+                        <List className={classes.desenList}>
+                            <ListItem
+                                button
+                                onClick={() =>
+                                    this.setState({ pagesIdModal: true })
+                                }
+                            >
+                                <ListItemIcon className={classes.iconFix}>
+                                    <UploadFileIcon />
+                                </ListItemIcon>
+                                <ListItemText primary={t("setting.pdfPagesId")} />
+
+                                <ListItemSecondaryAction
+                                    onClick={() =>
+                                        this.setState({ pagesIdModal: true })
+                                    }
+                                    className={classes.flexContainer}
+                                >
+                                    <Typography
+                                        className={classes.infoTextWithIcon}
+                                        color="textSecondary"
+                                    >
+                                        {this.state.settings.pdf.pagesId}
+                                    </Typography>
+                                    <RightIcon
+                                        className={classes.rightIconWithText}
+                                    />
+                                </ListItemSecondaryAction>
+                            </ListItem>
+
+                            <Divider />
+
+                    
+                            <ListItem button>
+                                <ListItemIcon className={classes.iconFix}>
+                                    <CloudSyncIcon />
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary={t("setting.pdfAutoSave")}
+                                />
+
+                                <ListItemSecondaryAction>
+                                    <Switch
+                                        onChange={this.handleTogglePdf("autosave")}
+                                        checked={this.state.settings.pdf.autosave}
+                                    />
+                                </ListItemSecondaryAction>
+                            </ListItem>
+
+                            <Divider />
+                            
+                            <ListItem
+                                button
+                                onClick={() =>
+                                    this.setState({ pdfAutosaveIntervalModal: true })
+                                }
+                            >
+                                <ListItemIcon className={classes.iconFix}>
+                                    <AccessTimeIcon />
+                                </ListItemIcon>
+                                <ListItemText primary={t("setting.pdfAutoSaveInterval")} />
+
+                                <ListItemSecondaryAction
+                                    onClick={() =>
+                                        this.setState({ pdfAutosaveIntervalModal: true })
+                                    }
+                                    className={classes.flexContainer}
+                                >
+                                    <Typography
+                                        className={classes.infoTextWithIcon}
+                                        color="textSecondary"
+                                    >
+                                        {this.state.settings.pdf.autosaveInterval}
+                                    </Typography>
+                                    <RightIcon
+                                        className={classes.rightIconWithText}
+                                    />
+                                </ListItemSecondaryAction>
+                            </ListItem>
+
+                            <Divider />
+
+                            <ListItem button>
+                                <ListItemIcon className={classes.iconFix}>
+                                    <SdCardAlertIcon />
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary={t("setting.changePrompt")}
+                                />
+
+                                <ListItemSecondaryAction>
+                                    <Switch
+                                        onChange={this.handleTogglePdf("changePrompt")}
+                                        checked={this.state.settings.pdf.changePrompt}
+                                    />
+                                </ListItemSecondaryAction>
+                            </ListItem>
+                           
+                            <Divider />
+
+                            <ListItem button>
+                                <ListItemIcon className={classes.iconFix}>
+                                    <SaveIcon />
+                                </ListItemIcon>
+                                <ListItemText
+                                    primary={t("setting.pdfSaveButton")}
+                                />
+
+                                <ListItemSecondaryAction>
+                                    <Switch
+                                        onChange={this.handleTogglePdf("saveButton")}
+                                        checked={this.state.settings.pdf.saveButton}
+                                    />
+                                </ListItemSecondaryAction>
+                            </ListItem>
+                            
+                        </List>
+                    </Paper>
+
+
+
+{/*   #############################################                  DIALOGS      #####################################     */}
+
+
+
+                    <Dialog open={this.state.pagesIdModal} onClose={this.handleClose}>
+                    <DialogTitle>{t("setting.changePdfPagesId")}</DialogTitle>
+                    <DialogContent>
+                        <TextField
+                            id="standard-name"
+                            label={t("setting.pdfPagesId")}
+                            className={classes.textField}
+                            value={this.state.pdfPagesId}
+                            onChange={this.handleChange("pdfPagesId")} 
+                            margin="normal"
+                            autoFocus
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={this.handleClose} color="default">
+                            {t("cancel", { ns: "common" })}
+                        </Button>
+                        <Button
+                            onClick={this.changePdfpagesId} 
+                            color="primary"
+                            disabled={
+                                this.state.loading === "pdf" ||
+                                this.state.settings.pdf.pagesId === ""
+                            }
+                        >
+                            {t("ok", { ns: "common" })}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+
+
+
+
+                <Dialog open={this.state.pdfAutosaveIntervalModal} onClose={this.handleClose}>
+                    <DialogTitle>{t("setting.changeAutosaveInterval")}</DialogTitle>
+                    <DialogContent>
+                        <TextField
+                            id="standard-name"
+                            label={t("setting.pdfAutoSaveInterval")}
+                            className={classes.textField}
+                            value={this.state.pdfAutosaveInterval}
+                            onChange={this.handleChange("pdfAutosaveInterval")} 
+                            margin="normal"
+                            autoFocus
+                            type="number" // Ensure the input type is set to "number"
+                            inputProps={{ min: 0 }} // Optional: Set a minimum value if needed
+                        />
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={this.handleClose} color="default">
+                            {t("cancel", { ns: "common" })}
+                        </Button>
+                        <Button
+                            onClick={this.changeAutosaveInterval} 
+                            color="primary"
+                            disabled={
+                                this.state.loading === "pdf" ||
+                                this.state.pdfAutosaveInterval === "" ||
+                                isNaN(this.state.pdfAutosaveInterval) // || // Fix: isNaN, not !NaN
+                                // parseInt(this.state.settings.pdf.autosaveInterval, 10) !== parseFloat(this.state.settings.pdf.autosaveInterval)
+
+                            }
+                        >
+                            {t("ok", { ns: "common" })}
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+</>)}
+
+
+
+{/*   #############################################                    CUSTOM CODE      #####################################     */}
+
                     <Typography
                         className={classes.sectionTitle}
                         variant="subtitle2"
@@ -758,7 +1172,7 @@ class UserSettingCompoment extends Component {
 
                                 <ListItemSecondaryAction>
                                     <Switch
-                                        onChange={this.handleToggle}
+                                        onChange={this.handleToggleHome}
                                         checked={this.state.settings.homepage}
                                     />
                                 </ListItemSecondaryAction>

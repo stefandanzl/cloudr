@@ -9,11 +9,12 @@ import pathHelper from "../../utils/page";
 // import TextLoading from "../Placeholder/TextLoading";
 import { toggleSnackbar } from "../../redux/explorer";
 import UseFileSubTitle from "../../hooks/fileSubtitle";
-// import { useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
 // import PdfViewerComponent from "./PdfViewerComponent";
 import SaveButton from "../Dial/Save";
 import API from "../../middleware/Api";
 import { Eraser } from "mdi-material-ui";
+import { PDFDocument } from 'pdf-lib'
 
 
 const useStyles = makeStyles((theme) => ({
@@ -52,12 +53,11 @@ export default function PDFViewer() {
 
     //  idRef // = useRef(null);
 
-    // const { t } = useTranslation();
-    const math = useRouteMatch();
+    const { t } = useTranslation();
+    const match = useRouteMatch();
     const location = useLocation();
     const query = useQuery();
     const { id } = useParams();
-    UseFileSubTitle(query, math, location);
 
     const $vm = React.createRef();
     const [content, setContent] = useState("");
@@ -69,9 +69,12 @@ export default function PDFViewer() {
     const [idRef, setIdRef] = useState(null);
     const [contentState, setContentState] = useState("unchanged");
     const [pdfState, setPdfState] = useState(true);
-    const [pdfSettings, setPdfSettings] = useState({ autoSave: true, autoSaveInterval_S: 10, changePrompt: true, saveButton: true, })
-
-    // const [pageNumber, setPageNumber] = useState(1);
+    const [pdfSettings, setPdfSettings] = useState({ autoSave: true, autoSaveInterval: 10, changePrompt: true, saveButton: true, pagesId: "" })
+    
+    const [pageNumber, setPageNumber] = useState(1);
+    const [pageDB, setPageDB ] = useState({})
+    const { title, path } = UseFileSubTitle(query, match, location);
+    const [fetchSettings, setFetchSettings ] = useState(true);
 
     const dispatch = useDispatch();
     const ToggleSnackbar = useCallback(
@@ -108,36 +111,175 @@ export default function PDFViewer() {
          },[]); */
 
 
+         function getCurrentTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+    
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+
+         // Last viewed Page Number gets stored in PDF file's Producer Field
+         const loadPdf = async (url) => {
+            try {
+                const pdfBytes = await fetch(url).then(res => res.arrayBuffer());
+                const pdfDoc = await PDFDocument.load(pdfBytes);
+                const producer = pdfDoc.getProducer();
+                if (typeof producer === 'string' && !isNaN(producer)) {
+                    setPageNumber(parseInt(producer, 10));
+                }
+                return pdfBytes;
+            } catch (error) {
+                console.error('Error loading PDF:', error);
+                throw error; // Rethrow the error for further handling if needed
+            }
+        };
+
     const save = async () => {
+        
+        console.log("SAVE FUNCTION START",getCurrentTime())
         try {
             if (!pdfInstance) {
                 // Handle the case where pdfInstance is not available yet
-                console.error("PDF instance not available.");
+                console.log("PDF instance not available.",getCurrentTime());
                 return;
             }
             setContentState("saving")
 
-            // const arrayBuffer = await pdfInstance.exportPDF();
-            const arrayBuffer = await pdfInstance.exportPDF();
-            const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+            if (pdfSettings.pagesId){
+                console.log("pagesId exists")       ///
+            // setPageDB((prev) => {
 
+                const tempPageDB = pageDB
+                // const PageDB = { ...prev };
+                tempPageDB[query.get("id")] = { i: pageNumber };
+                setPageDB(tempPageDB)
+                
+                console.log("pagesId pageDB was updated",getCurrentTime())
+                // This code will run after the state has been updated
+                const content = JSON.stringify(tempPageDB, 2)
+                API.put("/file/update/" + pdfSettings.pagesId, content )
+              /*  .then(() => {
+                    console.log("uploaded pageDB successfully",getCurrentTime())
+                }) */
+                .catch((error) => { 
+                    console.log("ERRROR uploading pageDB", error.message,getCurrentTime())
+                })
+
+            //   });
+            }
+            console.log("exporting PDF", getCurrentTime())
+            // const arrayBuffer = await pdfInstance.exportPDF();
+            const arrayBuffer = await pdfInstance.exportPDF();   //let
+            console.log("exported PDF", getCurrentTime())
+            // if (pageNumber > 1){
+            //     let pdfDoc = await PDFDocument.load(arrayBuffer)
+            //     pdfDoc = pdfDoc.setProducer(pageNumber.toString())
+            //     arrayBuffer = await pdfDoc.save()
+            // }
+
+            const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+            console.log("blob finished", getCurrentTime())
             API.put("/file/update/" + query.get("id"), blob)
                 .then(() => {
+                    console.log("upload PDF fishish", getCurrentTime())
                     setContentState((prev) => { return "unchanged" });
-                    console.log("saved successfully!");
+                    console.log("saved successfully!",getCurrentTime());
                     setStatus("success");
                     setTimeout(() => setStatus(""), 2000);
                 })
                 .catch((error) => {
+                    console.log("upload PDF fail", getCurrentTime())
                     setContentState((prev) => { return "modified" });
-                    console.log("saved failed!");
+                    console.log("saved failed!",getCurrentTime());
                     setStatus("");
                     ToggleSnackbar("top", "right", error.message, "error");
                 });
         } catch (error) {
-            console.error("Error exporting PDF:", error);
+            console.error("Error exporting PDF:", error,getCurrentTime());
         }
     };
+
+
+    useEffect(()=>{
+
+        if( fetchSettings){
+            setFetchSettings(false);
+            (async function () { 
+        API.get("/user/setting").then((response)=>{
+            
+            const pagesId = response.data.pdf.pagesId
+
+            setPdfSettings({
+                autoSave: response.data.pdf.autoSave, 
+                autoSaveInterval: response.data.pdf.autosaveInterval, 
+                changePrompt: response.data.pdf.changePrompt, 
+                saveButton: response.data.pdf.saveButton, 
+                pagesId,
+            })
+
+            if(pagesId){
+
+                API.get("/file/content/" + pagesId, { responseType: "arraybuffer" })
+            .then((response) => {
+                const buffer = new Buffer(response.rawData, "binary");
+                const textdata = buffer.toString(); // for string
+                const objData = JSON.parse(textdata)
+                // setPageDB(objData)
+                let index = 1;
+                // const foundObject = arrayOfObjects.find(obj => obj[id] === query.get("id"));
+                // if (foundObject[]){
+                if (objData[query.get("id")]){ 
+                if(Number.isInteger((objData[query.get("id")].i))){
+                     index = setPageNumber(objData[query.get("id")].i)
+                     setPageNumber(index)
+                    }
+                } else {
+                    console.log("Current PDF not yet in index DB")
+                }
+                    setPageDB(objData[query.get("id")] = { 
+                            i: index, 
+                            n: title, 
+                            p: path
+                        })
+                        console.log(objData[query.get("id")] = { i: index,  n: title,  p: path  })
+                    })
+            .catch((error) => {
+                console.log(error.message)
+                ToggleSnackbar(
+                    "top",
+                    "right",
+                    t("fileManager.errorReadFileContent", {
+                        msg: error.message,
+                    }),
+                    "error"
+                );
+            })
+            .then(() => {
+                // setLoading(false);
+            });
+           
+        }
+        }).catch((error) => {
+            console.log(error.message)
+                ToggleSnackbar(
+                    "top",
+                    "right",
+                    t("fileManager.errorReadFileContent", {
+                        msg: error.message,
+                    }),
+                    "error"
+                );
+            })
+        
+    })();}
+    },[pdfSettings, pageNumber, pageDB, ])
+
+
+
+    //  Immediately invoked function expression (async function () {  })();
 
     useEffect(() => {
         const container = containerRef.current;
@@ -153,8 +295,8 @@ export default function PDFViewer() {
             let PSPDFKit;
 
             (async function () {
-                const baseURL = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                      // WEB
-                // const baseURL = `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`      // LOCAL                                                      
+                // const baseURL = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                      // WEB
+                const baseURL = `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`      // LOCAL                                                      
                 PSPDFKit = await import("pspdfkit");                                                                  // LOCAL
                 //PSPDFKit = await import(cdnBase+'pspdfkit.js'); 
                 const annotationPresets = PSPDFKit.defaultAnnotationPresets;
@@ -290,8 +432,7 @@ export default function PDFViewer() {
 
                 );
 
-                const document =
-                    getBaseURL() +
+                const document = getBaseURL() +
                     (pathHelper.isSharePage(location.pathname)
                         ? "/share/preview/" +
                         id +
@@ -299,7 +440,7 @@ export default function PDFViewer() {
                             ? "?path=" +
                             encodeURIComponent(query.get("share_path"))
                             : "")
-                        : "/file/preview/" + query.get("id"));
+                        : "/file/preview/" + query.get("id"))
 
 
 
@@ -324,7 +465,11 @@ export default function PDFViewer() {
                         toolbarPlacement: PSPDFKit.ToolbarPlacement.BOTTOM,
 
                         enableClipboardActions: true,
-                        enableHistory: true
+                        enableHistory: true,
+                        initialViewState: new PSPDFKit.ViewState({
+                            pageIndex: pageNumber,
+                            // sidebarMode: PSPDFKit.SidebarMode.THUMBNAILS
+                          })
                     })
                         .then(async (instance) => {
                             // instancer = instance;
@@ -333,37 +478,15 @@ export default function PDFViewer() {
                             setPdfInstance(instance);
                             console.log("INSTANCEEE:", pdfInstance)
 
-                            const STORAGE_KEY = "lastViewedPageMap";
-                            const documentId = query.get("id");
-                            const lastViewedPageString = localStorage.getItem(STORAGE_KEY);
-                            if (lastViewedPageString) {
-                                const map = JSON.parse(lastViewedPageString);
-                                const page = map[documentId];
-                                if (page) {
-                                    instance.setViewState(v => v.set("currentPageIndex", parseInt(page)));
-                                }
-                            }
 
                             instance.addEventListener("viewState.currentPageIndex.change", page => {
-                                const current = localStorage.getItem(STORAGE_KEY);
-                                const map = current ? JSON.parse(current) : {};
-                                localStorage.setItem(
-                                    STORAGE_KEY,
-                                    JSON.stringify({ ...map, [documentId]: page })
-                                );
+                                setPageNumber(page)
+
                             });
 
-                            // instance.addEventListener(
-                            //     "document.saveStateChange",
-                            //     async (event) => {
-                            //         console.log(
-                            //             `Save state changed: ${event.hasUnsavedChanges}`
-                            //         );
-                            //         //   console.log(props.id)
-                            //         // if (event.hasUnsavedChanges){save()}
-                            //     }
-                            // );
-
+                            function createGoToAction(pageIndex) {
+                                return new PSPDFKit.Actions.GoToAction({ pageIndex });
+                              }
 
                             instance.addEventListener(
                                 "annotations.willChange",
@@ -415,6 +538,8 @@ export default function PDFViewer() {
                 // const pdfFunc = loadPdf();
             })();
 
+            // document.then(async (doc) => { pdfInstance.load({document: doc})})
+
             return () => {
                 PSPDFKit && PSPDFKit.unload(container);
                 if (pdfInstance) {
@@ -424,7 +549,7 @@ export default function PDFViewer() {
         }
 
         // PSPDFKit && ;
-    }, [pdfState, contentState]);
+    }, [pdfState, contentState, pageNumber]);
 
 
     useEffect(() => {
@@ -460,14 +585,7 @@ export default function PDFViewer() {
     //   }
     // };
 
-    function getCurrentTime() {
-        const now = new Date();
-        const hours = now.getHours().toString().padStart(2, '0');
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
-
-        return `${hours}:${minutes}:${seconds}`;
-    }
+   
     // Conditionally run the useEffect hook based on autoSaveEnabled
 
     useEffect(() => {
@@ -482,7 +600,7 @@ export default function PDFViewer() {
                 if (contentState !== "unchanged") {
                     save();
                 }
-            }, 1000 * pdfSettings.autoSaveInterval_S); // 20 seconds = 20000
+            }, 1000 * pdfSettings.autoSaveInterval); // 20 seconds = 20000
 
             // Clean up interval when the component is unmounted
             return () => clearInterval(intervalId);
@@ -494,7 +612,9 @@ export default function PDFViewer() {
     return (
         <div className={classes.layout}>
             {pdfSettings.saveButton && <SaveButton onClick={save} status={status} />}
-
+            <div 
+            style={{ margin: 0, top: 84, bottom: "auto", right: 20, left: "auto", zIndex: 1500, position: "fixed" }} >
+                <h2>{pageNumber}</h2></div>
             <div
                 ref={containerRef}
                 style={{ width: "100%", height: "calc(100vh - 64px)" }}

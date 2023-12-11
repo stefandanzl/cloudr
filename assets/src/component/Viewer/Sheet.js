@@ -525,7 +525,7 @@ useEffect(() => {
     margin: '0px',
     padding: '0px',
     // position: 'absolute',
-    width: "100%", 
+    width: "100vh", 
     height: "calc(100vh - 64px)", 
     // width: '100%',
     // height: '100%',
