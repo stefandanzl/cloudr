@@ -263,11 +263,11 @@ export default function PDFViewer() {
 
 
                         const arrayIndex = objArray.findIndex(obj => obj.id === query.get("id"))
-                        if (index !== -1){
+                        if (arrayIndex !== -1){
                             const foundObject = objArray[arrayIndex];
                             
                             if (Number.isInteger(foundObject.i)){
-                                index = foundObject.i
+                                // index = foundObject.i
                                 setPageNumber(foundObject.i)
                             } else {
                                 foundObject.i = 0;
