@@ -15,7 +15,7 @@ import SaveButton from "../Dial/Save";
 import API from "../../middleware/Api";
 import { Eraser } from "mdi-material-ui";
 // import { PDFDocument } from 'pdf-lib'
-
+import "./PDF.css"
 
 const useStyles = makeStyles((theme) => ({
     layout: {
@@ -64,9 +64,8 @@ export default function PDFViewer() {
     const [status, setStatus] = useState("");
     const [loading, setLoading] = useState(true);
 
-    let instancer;
+  
     const [pdfInstance, setPdfInstance] = useState(null);
-    const [idRef, setIdRef] = useState(null);
     const [contentState, setContentState] = useState("unchanged");
     const [pdfState, setPdfState] = useState(true);
     const [pdfSettings, setPdfSettings] = useState({ autoSave: true, autoSaveInterval: 10, changePrompt: true, saveButton: true, pagesId: "" })
@@ -75,6 +74,7 @@ export default function PDFViewer() {
     const [pageDB, setPageDB ] = useState({})
     const { title, path } = UseFileSubTitle(query, match, location);
     const [fetchSettings, setFetchSettings ] = useState(true);
+    const [pageInit, setPageInit] = useState(true);
 
     const dispatch = useDispatch();
     const ToggleSnackbar = useCallback(
@@ -149,32 +149,10 @@ export default function PDFViewer() {
         //     }
         // };
 
-    const save = async () => {
-        
-        console.log("SAVE FUNCTION START",getCurrentTime())
+    const savePageData = async () => {
         try {
-            if (!pdfInstance) {
-                // Handle the case where pdfInstance is not available yet
-                console.log("PDF instance not available.",getCurrentTime());
-                return;
-            }
-            setContentState("saving")
-
-            if (pdfSettings.pagesId){
-                console.log("pagesId exists")       ///
-            // setPageDB((prev) => {
-
-                // const tempPageDB = pageDB
-                // const PageDB = { ...prev };
-          /*      const tempPageDB = pageDB;
-                tempPageDB[query.get("id")] = {
-                    ...tempPageDB[query.get("id")],
-                    i: pageNumber,
-                };
-                setPageDB(tempPageDB);  */
-                
-                const objArray = pageDB
-                if (pageNumber > 1){
+            const objArray = pageDB
+            if (pageNumber > 1){
                 
                 objArray[0].i = pageNumber;
                 
@@ -183,20 +161,49 @@ export default function PDFViewer() {
                 console.log("pagesId pageDB was updated",getCurrentTime())
             }
 
-                
-                
                 // This code will run after the state has been updated
-                const content = JSON.stringify(objArray, 2)
-                API.put("/file/update/" + pdfSettings.pagesId, content )
-              /*  .then(() => {
+                const content = JSON.stringify(objArray, null, 2)
+                await API.put("/file/update/" + pdfSettings.pagesId, content )
+               
                     console.log("uploaded pageDB successfully",getCurrentTime())
-                }) */
-                .catch((error) => { 
+                    return true
+                
+                
+            } catch(error){ 
                     console.log("ERRROR uploading pageDB", error.message,getCurrentTime())
-                })
+                    ToggleSnackbar("top", "right", "Saving PageData failed", "error");
+                    return false
+                }
+    }    
 
-            //   });
+    const save = async () => {
+        
+        console.log("SAVE FUNCTION START",getCurrentTime())
+        if (contentState === "saving"){return}
+        try {
+            if (!pdfInstance) {
+                // Handle the case where pdfInstance is not available yet
+                console.log("PDF instance not available.",getCurrentTime());
+                return;
             }
+            
+            let savePageDataSuccess = false;
+            if (pdfSettings.pagesId){
+                console.log("pagesId exists")       
+                
+                savePageDataSuccess = await savePageData()
+                
+            }
+
+            if (contentState !== "modified"){ 
+                if(savePageDataSuccess){
+                    setStatus("success");
+                    setTimeout(() => setStatus(""), 2000);
+                    console.log("Not saving PDF because no changes have been made.")
+                } 
+                return   
+            }
+                setContentState("saving")
             console.log("exporting PDF", getCurrentTime())
             // const arrayBuffer = await pdfInstance.exportPDF();
             const arrayBuffer = await pdfInstance.exportPDF();   //let
@@ -227,8 +234,18 @@ export default function PDFViewer() {
         } catch (error) {
             console.error("Error exporting PDF:", error,getCurrentTime());
         }
+        
     };
 
+    useEffect(()=>{
+        if ( pageInit && pdfInstance && pageDB){
+            setPageInit(false)
+            if(pageNumber )
+            
+            pdfInstance.setViewState(v => v.set("currentPageIndex", pageNumber));
+        }
+    
+    },[pageInit, pdfInstance, pageNumber, pageDB])
 
     useEffect(()=>{
 
@@ -253,6 +270,9 @@ export default function PDFViewer() {
             .then((response) => {
                 const buffer = new Buffer(response.rawData, "binary");
                 const textdata = buffer.toString(); // for string
+                
+                console.log("TEXTDATA: ",textdata)
+                
                 let objArray;
                 try{
                     objArray = JSON.parse(textdata)
@@ -275,55 +295,53 @@ export default function PDFViewer() {
                              
                             foundObject.p = query.get("p")
                             objArray.splice(arrayIndex, 1);
-                            objArray.push(foundObject)
+                            objArray.unshift(foundObject)
                             
         
-                        } 
+                        } else {
+
+                            console.log("PDF Document not yet in pagesDB")
+
+                            const newObj = {
+                                id: query.get("id"),
+                                i: 0,
+                                p: query.get("p"),
+                            }
+                            objArray.unshift(newObj)
+                        }
 
 
                     } else {
                         // objArray is not an array
                         console.log("It's not an array! Previous data stored as dumpDB");
 
-                        objArray = [
-                            { 
-                            id: query.get("id"),
-                            i: 0,
-                            p: query.get("p"),
-                        }, 
-                        {dumpDB: textdata}
-                    ]
+                        throw new Error("It's not an array! Previous data stored as dumpDB");
+                        // objArray = [
+                        //     { 
+                        //     id: query.get("id"),
+                        //     i: 0,
+                        //     p: query.get("p"),
+                        // }, 
+                        // {dumpDB: textdata}
+                    // ]
                     }
-                } catch {
+                } catch (error) {
                     console.log("Invalid JSON in pages file!")
-                    
-                    objArray = [{ 
+                    console.log(error.message)
+
+                    objArray = [
+                        { 
                         id: query.get("id"),
                         i: 0,
                         p: query.get("p"),
-                    }]
+                    }, 
+                    {dumpDB: textdata}
+                ]
                 }
-                // setPageDB(objData)
-                // let index = 0;
-                // const foundObject = arrayOfObjects.find(obj => obj[id] === query.get("id"));
-                // if (foundObject[]){
-                    // console.log("PATH: ",query.get("p"))
 
+                console.log("ULTIMATE ARRAY: ",objArray)
                 setPageDB(objArray)
 
-
-                // console.log("SETpageDB",title, index, path)
-
-         /*       setPageDB((prev) => {
-                    const PageDB = { ...prev };
-                    PageDB[query.get("id")] = {
-                        ...PageDB[query.get("id")],
-                        i: pageNumber,
-                        p: query.get("p")
-                    };
-                    return PageDB;
-                }); */
-                        // console.log(objData[query.get("id")] = { i: index,  n: title,  p: path  })
                     })
             .catch((error) => {
                 console.log(error.message)   // r[G.get(...)] is undefined
@@ -374,8 +392,8 @@ export default function PDFViewer() {
             let PSPDFKit;
 
             (async function () {
-                // const baseURL = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                      // WEB
-                const baseURL = `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`      // LOCAL                                                      
+                const baseURL = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                      // WEB
+                // const baseURL = `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`      // LOCAL                                                      
                 PSPDFKit = await import("pspdfkit");                                                                  // LOCAL
                 //PSPDFKit = await import(cdnBase+'pspdfkit.js'); 
                 const annotationPresets = PSPDFKit.defaultAnnotationPresets;
@@ -396,9 +414,9 @@ export default function PDFViewer() {
                 toolbarItems.push(
                     {
                         type: "responsive-group",
-                        id: "m-hide",
+                        id: "m-hide",         // mobile hide
                         mediaQueries: ["max-width: 600px"],
-                        icon: "https://example.com/icon.png",
+                        // icon: "https://example.com/icon.png",
                     }, {
                     type: "document-editor",
                     dropdownGroup: "doc",
@@ -558,6 +576,10 @@ export default function PDFViewer() {
                             console.log("INSTANCEEE:", pdfInstance)
 
 
+                            if (pageNumber) {
+                                instance.setViewState(v => v.set("currentPageIndex", pageNumber));
+                            }
+
                             instance.addEventListener("viewState.currentPageIndex.change", page => {
                                 setPageNumber(page)
 
@@ -597,10 +619,16 @@ export default function PDFViewer() {
                             //     console.log("Something in the annotations has changed.");
                             //   });
                             instance.addEventListener("annotations.create", createdAnnotations => {
-                                console.log("BEFORE", contentState)
                                 setContentState((prev) => { return "modified" });
-                                console.log("AFTER", contentState)
                                 console.log("createdAnnotations", createdAnnotations);
+                            });
+                            // instance.addEventListener("annotations.update", updatedAnnotations  => {
+                            //     setContentState((prev) => { return "modified" });
+                            //     console.log("updatedAnnotations ", updatedAnnotations );
+                            // });
+                            instance.addEventListener("annotations.delete", deletedAnnotations  => {
+                                setContentState((prev) => { return "modified" });
+                                console.log("deletedAnnotations ", deletedAnnotations );
                             });
 
 
