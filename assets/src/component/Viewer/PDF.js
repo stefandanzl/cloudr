@@ -71,7 +71,7 @@ export default function PDFViewer() {
     const [pdfState, setPdfState] = useState(true);
     const [pdfSettings, setPdfSettings] = useState({ autoSave: true, autoSaveInterval: 10, changePrompt: true, saveButton: true, pagesId: "" })
     
-    const [pageNumber, setPageNumber] = useState(1);
+    const [pageNumber, setPageNumber] = useState(0);
     const [pageDB, setPageDB ] = useState({})
     const { title, path } = UseFileSubTitle(query, match, location);
     const [fetchSettings, setFetchSettings ] = useState(true);
@@ -109,8 +109,20 @@ export default function PDFViewer() {
              });
      // };
          },[]); */
-
-
+   /*      useEffect(() => {
+            if (!pathHelper.isSharePage(location.pathname)) {
+                const path = query.get("p").split("/");
+                setPath(query.get("p"));
+                SetSubTitle(path[path.length - 1]);
+                setTitle(path[path.length - 1]);
+            } else {
+                SetSubTitle(query.get("name"));
+                setTitle(query.get("name"));
+                setPath(query.get("share_path"));
+            }
+            // eslint-disable-next-line
+        }, [math.params[0], location]);
+*/
          function getCurrentTime() {
             const now = new Date();
             const hours = now.getHours().toString().padStart(2, '0');
@@ -152,10 +164,14 @@ export default function PDFViewer() {
                 console.log("pagesId exists")       ///
             // setPageDB((prev) => {
 
-                const tempPageDB = pageDB
+                // const tempPageDB = pageDB
                 // const PageDB = { ...prev };
-                tempPageDB[query.get("id")] = { i: pageNumber };
-                setPageDB(tempPageDB)
+                const tempPageDB = pageDB;
+                tempPageDB[query.get("id")] = {
+                    ...tempPageDB[query.get("id")],
+                    i: pageNumber,
+                };
+                setPageDB(tempPageDB);
                 
                 console.log("pagesId pageDB was updated",getCurrentTime())
                 // This code will run after the state has been updated
@@ -205,7 +221,7 @@ export default function PDFViewer() {
 
     useEffect(()=>{
 
-        if( fetchSettings){
+        if( fetchSettings ){
             setFetchSettings(false);
             (async function () { 
         API.get("/user/setting").then((response)=>{
@@ -228,26 +244,38 @@ export default function PDFViewer() {
                 const textdata = buffer.toString(); // for string
                 const objData = JSON.parse(textdata)
                 // setPageDB(objData)
-                let index = 1;
+                let index = 0;
                 // const foundObject = arrayOfObjects.find(obj => obj[id] === query.get("id"));
                 // if (foundObject[]){
+                    console.log("PATH: ",query.get("p"))
                 if (objData[query.get("id")]){ 
                 if(Number.isInteger((objData[query.get("id")].i))){
                      index = setPageNumber(objData[query.get("id")].i)
                      setPageNumber(index)
+                    
+                     console.log(objData[query.get("id")].i)
                     }
+                    
                 } else {
                     console.log("Current PDF not yet in index DB")
                 }
-                    setPageDB(objData[query.get("id")] = { 
-                            i: index, 
-                            n: title, 
-                            p: path
-                        })
-                        console.log(objData[query.get("id")] = { i: index,  n: title,  p: path  })
+               
+
+                // console.log("SETpageDB",title, index, path)
+
+                setPageDB((prev) => {
+                    const PageDB = { ...prev };
+                    PageDB[query.get("id")] = {
+                        ...PageDB[query.get("id")],
+                        i: pageNumber,
+                        p: query.get("p")
+                    };
+                    return PageDB;
+                });
+                        // console.log(objData[query.get("id")] = { i: index,  n: title,  p: path  })
                     })
             .catch((error) => {
-                console.log(error.message)
+                console.log(error.message)   // r[G.get(...)] is undefined
                 ToggleSnackbar(
                     "top",
                     "right",
@@ -275,7 +303,7 @@ export default function PDFViewer() {
             })
         
     })();}
-    },[pdfSettings, pageNumber, pageDB, ])
+    },[pdfSettings, pageNumber, pageDB, title, path, query])
 
 
 
@@ -484,9 +512,9 @@ export default function PDFViewer() {
 
                             });
 
-                            function createGoToAction(pageIndex) {
-                                return new PSPDFKit.Actions.GoToAction({ pageIndex });
-                              }
+                            // function createGoToAction(pageIndex) {
+                            //     return new PSPDFKit.Actions.GoToAction({ pageIndex });
+                            //   }
 
                             instance.addEventListener(
                                 "annotations.willChange",
@@ -549,7 +577,7 @@ export default function PDFViewer() {
         }
 
         // PSPDFKit && ;
-    }, [pdfState, contentState, pageNumber]);
+    }, [pdfState, contentState, pageNumber, pdfSettings]);
 
 
     useEffect(() => {
