@@ -1103,7 +1103,7 @@ class UserSettingCompoment extends Component {
                             color="primary"
                             disabled={
                                 this.state.loading === "pdf" ||
-                                this.state.settings.pdf.pagesId === ""
+                                this.state.pdfPagesId === ""
                             }
                         >
                             {t("ok", { ns: "common" })}

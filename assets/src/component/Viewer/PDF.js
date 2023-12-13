@@ -704,9 +704,9 @@ export default function PDFViewer() {
                 console.log(currentTime); // Outputs something like "12:34"
                 console.log("INTERVAL")
                 console.log(contentState)
-                if (contentState !== "unchanged") {
+                // if (contentState !== "unchanged") {       disabled because handled by save() function
                     save();
-                }
+                // }
             }, 1000 * pdfSettings.autoSaveInterval); // 20 seconds = 20000
 
             // Clean up interval when the component is unmounted

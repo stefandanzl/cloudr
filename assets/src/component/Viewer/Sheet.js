@@ -23,30 +23,30 @@ import { usePagination } from "../../hooks/pagination";
 import { useSelector } from "react-redux";
 import { makeStyles } from "@material-ui/core/styles";
 
-const useStyles = makeStyles((theme) => ({
-  layout: {
-      marginTop: 0,
-      marginLeft: 0,
-      marginRight: 0,
-      marginBottom: 0,
-      // overflow: "hidden",
-      // width: "100%",
-      // height: "100vh"
-  },
-  "@global": {
-      canvas: {
-          // width: "100% !important",
-          // height: "auto !important",
-          borderRadius: theme.shape.borderRadius,
-      },
-      ".overflow-guard": {
-          borderRadius: "0 0 12px 12px!important",
-      },
-  },
-  paper: {
-      marginBottom: theme.spacing(3),
-  },
-}));
+// const useStyles = makeStyles((theme) => ({
+//   layout: {
+//       marginTop: 0,
+//       marginLeft: 0,
+//       marginRight: 0,
+//       marginBottom: 0,
+//       // overflow: "hidden",
+//       // width: "100%",
+//       // height: "100vh"
+//   },
+//   "@global": {
+//       canvas: {
+//           // width: "100% !important",
+//           // height: "auto !important",
+//           borderRadius: theme.shape.borderRadius,
+//       },
+//       ".overflow-guard": {
+//           borderRadius: "0 0 12px 12px!important",
+//       },
+//   },
+//   paper: {
+//       marginBottom: theme.spacing(3),
+//   },
+// }));
 
 function useQuery() {
     return new URLSearchParams(useLocation().search);
@@ -524,8 +524,8 @@ useEffect(() => {
   const luckyCss = {
     margin: '0px',
     padding: '0px',
-    // position: 'absolute',
-    width: "100vh", 
+    position: 'absolute',
+    width: "100%", 
     height: "calc(100vh - 64px)", 
     // width: '100%',
     // height: '100%',
@@ -534,12 +534,14 @@ useEffect(() => {
     color: "black !important",
   };
 
-  const classes = useStyles();
+  // const classes = useStyles();
   return (
-    <div className={classes.layout}>
+    
+      <>
     <SaveButton onClick={saveProcess} status={status} />
     {showDiv && <div id="luckysheetDiv" style={luckyCss}></div>}
-    </div>
+    
+    </>
   )
 }
 
