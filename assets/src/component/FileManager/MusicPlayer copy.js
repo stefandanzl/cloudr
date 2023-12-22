@@ -33,7 +33,6 @@ import {
     showAudioPreview,
 } from "../../redux/explorer";
 import { withTranslation } from "react-i18next";
-import MediaSession from '@mebtte/react-media-session';
 
 const styles = (theme) => ({
     list: {
@@ -83,6 +82,166 @@ class MusicPlayerComponent extends Component {
         looptype: 0,
     };
     myAudioRef = React.createRef();
+
+
+///////////////////
+
+
+// playAudio() {
+//   audio.src = playlist[index].src;
+//   audio.play()
+//   .then(_ => updateMetadata())
+//   .catch(error => log(error));
+// }
+
+// updateMetadata() {
+//   let track = playlist[index];
+
+//   log('Playing ' + track.title + ' track...');
+//   navigator.mediaSession.metadata = new MediaMetadata({
+//     title: track.title,
+//     artist: track.artist,
+//     album: track.album,
+//     artwork: track.artwork
+//   });
+
+//   // Media is loaded, set the duration.
+//   updatePositionState();
+// }
+
+/* Position state (supported since Chrome 81) */
+
+// updatePositionState() {
+//   if ('setPositionState' in navigator.mediaSession) {
+//     log('Updating position state...');
+//     navigator.mediaSession.setPositionState({
+//       duration: audio.duration,
+//       playbackRate: audio.playbackRate,
+//       position: audio.currentTime
+//     });
+//   }
+// }
+
+
+setMediaHandlers(){
+/* Previous Track & Next Track */
+
+navigator.mediaSession.setActionHandler('previoustrack', function() {
+  console.log('> User clicked "Previous Track" icon.');
+  this.prev()
+});
+
+navigator.mediaSession.setActionHandler('nexttrack', function() {
+  console.log('> User clicked "Next Track" icon.');
+  this.next()
+});
+
+// audio.addEventListener('ended', function() {
+//   // Play automatically the next track when audio ends.
+//   index = (index - 1 + playlist.length) % playlist.length;
+//   this.play();
+// });
+
+/* Seek Backward & Seek Forward */
+
+const defaultSkipTime = 10; /* Time to skip in seconds by default */
+
+navigator.mediaSession.setActionHandler('seekbackward', function(event) {
+  console.log('> User clicked "Seek Backward" icon.');
+//   const skipTime = event.seekOffset || defaultSkipTime;
+//   audio.currentTime = Math.max(audio.currentTime - skipTime, 0);
+//   updatePositionState();
+});
+
+navigator.mediaSession.setActionHandler('seekforward', function(event) {
+  console.log('> User clicked "Seek Forward" icon.');
+//   const skipTime = event.seekOffset || defaultSkipTime;
+//   audio.currentTime = Math.min(audio.currentTime + skipTime, audio.duration);
+//   updatePositionState();
+});
+
+/* Play & Pause */
+
+navigator.mediaSession.setActionHandler('play', async function() {
+  console.log('> User clicked "Play" icon.');
+  this.play();
+  // Do something more than just playing audio...
+});
+
+navigator.mediaSession.setActionHandler('pause', function() {
+  console.log('> User clicked "Pause" icon.');
+  this.pause();
+  // Do something more than just pausing audio...
+});
+
+// audio.addEventListener('play', function() {
+//   navigator.mediaSession.playbackState = 'playing';
+// });
+
+// audio.addEventListener('pause', function() {
+//   navigator.mediaSession.playbackState = 'paused';
+// });
+
+/* Stop (supported since Chrome 77) */
+
+try {
+  navigator.mediaSession.setActionHandler('stop', function() {
+    console.log('> User clicked "Stop" icon.');
+    // TODO: Clear UI playback...
+  });
+} catch(error) {
+  console.log('Warning! The "stop" media session action is not supported.');
+}
+
+/* Seek To (supported since Chrome 78) */
+
+try {
+  navigator.mediaSession.setActionHandler('seekto', function(event) {
+    console.log('> User clicked "Seek To" icon.');
+    // if (event.fastSeek && ('fastSeek' in audio)) {
+    //   audio.fastSeek(event.seekTime);
+    //   return;
+    // }
+    // audio.currentTime = event.seekTime;
+    // updatePositionState();
+  });
+} catch(error) {
+  console.log('Warning! The "seekto" media session action is not supported.');
+}
+}
+
+////////////////////
+
+
+    setMediaSession = () => {
+        if ('mediaSession' in navigator) {
+            // eslint-disable-next-line no-undef
+            navigator.mediaSession.metadata = new MediaMetadata({
+                title: this.state.explorer.audioPreview.playingName,
+                artist: 'Artist Name',
+                album: 'Album Name',
+                // artwork: [
+                //     { src: 'cover.jpg', sizes: '96x96', type: 'image/jpeg' },
+                //     // Add more artwork sizes if needed
+                // ],
+            });
+
+            navigator.mediaSession.setActionHandler('play', this.play);
+            navigator.mediaSession.setActionHandler('pause', this.pause);
+            navigator.mediaSession.setActionHandler('previoustrack', this.prev);
+            navigator.mediaSession.setActionHandler('nexttrack', this.next);
+        }
+    };
+
+    removeMediaSession = () => {
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = null;
+            navigator.mediaSession.setActionHandler('play', null);
+            navigator.mediaSession.setActionHandler('pause', null);
+            navigator.mediaSession.setActionHandler('previoustrack', null);
+            navigator.mediaSession.setActionHandler('nexttrack', null);
+        }
+    };
 
     UNSAFE_componentWillReceiveProps = (nextProps) => {
         const items = [];
@@ -174,15 +333,33 @@ class MusicPlayerComponent extends Component {
     componentDidMount() {
         if (this.myAudioRef.current) {
             this.bindEvents(this.myAudioRef.current);
+
+            // // Set up Media Session API
+            // this.setMediaSession();
+
+            // Add "play" event listener
+            this.myAudioRef.current.addEventListener("play", this.handlePlay);
         }
     }
     componentDidUpdate() {
         if (this.myAudioRef.current) {
             this.bindEvents(this.myAudioRef.current);
+
+            // // Set up Media Session API
+            // this.setMediaSession();
+
+            // Add "play" event listener
+            this.myAudioRef.current.addEventListener("play", this.handlePlay);
         }
     }
     componentWillUnmount() {
         this.unbindEvents(this.myAudioRef.current);
+
+        // // Remove Media Session API setup
+        // this.removeMediaSession();
+
+        // Remove "play" event listener
+        this.myAudioRef.current.removeEventListener("play", this.handlePlay);
     }
 
     bindEvents = (ele) => {
@@ -235,10 +412,7 @@ class MusicPlayerComponent extends Component {
             this.state.items[this.state.currentIndex].intro,
             false
         );
-        console.log(this.state.items[this.state.currentIndex])
-        console.log(this.state.items[this.state.currentIndex]?.src)
-        console.log(this.state.items[this.state.currentIndex]?.intro)
-        console.log(this.myAudioRef.current.currentTime)
+        navigator.mediaSession.playbackState = 'playing';
     };
 
     pause = () => {
@@ -252,6 +426,7 @@ class MusicPlayerComponent extends Component {
             this.state.items[this.state.currentIndex]?.intro,
             true
         );
+        navigator.mediaSession.playbackState = 'paused';
     };
 
     playOrPaues = () => {
@@ -327,14 +502,6 @@ class MusicPlayerComponent extends Component {
         this.myAudioRef.current.currentTime = newValue;
     };
 
-    handleBackward = () => {
-        this.myAudioRef.current.currentTime = this.myAudioRef.current.currentTime - 10;
-    };
-
-    handleForward = () => {
-        this.myAudioRef.current.currentTime = this.myAudioRef.current.currentTime + 10;
-    };
-
     render() {
         const { currentIndex, items } = this.state;
         const { isOpen, classes, t } = this.props;
@@ -377,23 +544,12 @@ class MusicPlayerComponent extends Component {
                             );
                         })}
                     </List>
-                    <MediaSession
-                            title={this.state.items[this.state.currentIndex]?.intro} // not supported in Firefox
-                            // artist={music.singers.join(',')}
-                            album={this.state.items[this.state.currentIndex]?.src} // not supported in Firefox
-                            
-                            onPlay={this.play}
-                            onPause={this.pause}
-                            onSeekBackward={this.handleBackward}
-                            onSeekForward={this.handleForward}
-                            onPreviousTrack={this.prev}
-                            onNextTrack={this.next}
-                     >
                     <audio
+                        // controls  // OK?
+                        // title={items[currentIndex]?.src}   // OK?
                         ref={this.myAudioRef}
                         src={items[currentIndex]?.src}
                     />
-                    </MediaSession>
                     <div style={{ "padding-top": 8 }} />
                     <Grid container spacing={2} alignItems="center">
                         <Grid item xs>
