@@ -40,7 +40,6 @@ dist/
 
 #### dependencies
 assets/node_modules
-assets/node_modules/
 assets/.pnp
 assets/.pnp.js
 

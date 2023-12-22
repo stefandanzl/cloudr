@@ -1848,6 +1848,11 @@
     prop-types "^15.7.2"
     react-is "^16.8.0 || ^17.0.0"
 
+"@mebtte/react-media-session@^1.1.2":
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/@mebtte/react-media-session/-/react-media-session-1.1.2.tgz#4058992b8200905420f1962ab3dcf674261e9f0d"
+  integrity sha512-cf+E/ZXOvmDG76nRuuNBFgDvQURsAaM4B8w0p+P0ugy6tUGErEE0eHPtz66p/FnXrEtj2F+45iPEKDzW2R0+Bw==
+
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
   resolved "https://registry.npmjs.org/@mrmlnc/readdir-enhanced/-/readdir-enhanced-2.2.1.tgz"
