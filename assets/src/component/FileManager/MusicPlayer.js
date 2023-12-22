@@ -34,6 +34,8 @@ import {
 } from "../../redux/explorer";
 import { withTranslation } from "react-i18next";
 import MediaSession from '@mebtte/react-media-session';
+import "./MusicPlayer.css"; // Import your CSS file for styling
+
 
 const styles = (theme) => ({
     list: {
@@ -72,7 +74,15 @@ const mapDispatchToProps = (dispatch) => {
 };
 
 class MusicPlayerComponent extends Component {
-    state = {
+    constructor(props) {
+        super(props);
+    
+        // Try to retrieve the selected speed from localStorage, or set a default value
+        const storedSpeed = localStorage.getItem('selectedSpeed');
+        const initialSpeed = storedSpeed ? parseFloat(storedSpeed) : 1.0;
+    
+    
+    this.state = {
         items: [],
         currentIndex: 0,
         //isOpen: false,
@@ -81,8 +91,11 @@ class MusicPlayerComponent extends Component {
         duration: 0,
         progressText: "00:00/00:00",
         looptype: 0,
+        selectedSpeed: initialSpeed,
     };
-    myAudioRef = React.createRef();
+    this.myAudioRef = React.createRef();
+}
+    
 
     UNSAFE_componentWillReceiveProps = (nextProps) => {
         const items = [];
@@ -202,6 +215,10 @@ class MusicPlayerComponent extends Component {
     };
 
     readyPlay = () => {
+        // Set the playback rate on the audio element
+        if (this.myAudioRef.current) {
+            this.myAudioRef.current.playbackRate = this.state.selectedSpeed;
+        }
         this.play();
     };
 
@@ -311,6 +328,7 @@ class MusicPlayerComponent extends Component {
         this.setState({
             currentIndex: index,
         });
+
     };
 
     next = () => {
@@ -321,6 +339,7 @@ class MusicPlayerComponent extends Component {
         this.setState({
             currentIndex: index,
         });
+
     };
 
     handleProgress = (e, newValue) => {
@@ -334,6 +353,35 @@ class MusicPlayerComponent extends Component {
     handleForward = () => {
         this.myAudioRef.current.currentTime = this.myAudioRef.current.currentTime + 10;
     };
+
+      
+  handleSpeedChange = (newSpeed) => {
+    this.setState({
+      selectedSpeed: newSpeed,
+    });
+
+    // Save the selected speed to localStorage
+    localStorage.setItem('selectedSpeed', newSpeed.toString());
+
+    if (this.myAudioRef.current) {
+      this.myAudioRef.current.playbackRate = newSpeed;
+    }
+  };
+
+  handleIncreaseSpeed = () => {
+    const newSpeed = this.state.selectedSpeed + 0.1;
+    this.handleSpeedChange(newSpeed);
+  };
+
+  handleDecreaseSpeed = () => {
+    const newSpeed = this.state.selectedSpeed - 0.1;
+    this.handleSpeedChange(newSpeed >= 0.1 ? newSpeed : 0.1);
+  };
+
+  handleInputChange = (event) => {
+    const newSpeed = parseFloat(event.target.value);
+    this.handleSpeedChange(isNaN(newSpeed) ? 1.0 : newSpeed);
+  };
 
     render() {
         const { currentIndex, items } = this.state;
@@ -392,6 +440,7 @@ class MusicPlayerComponent extends Component {
                     <audio
                         ref={this.myAudioRef}
                         src={items[currentIndex]?.src}
+                        playbackRate={this.state.selectedSpeed}
                     />
                     </MediaSession>
                     <div style={{ "padding-top": 8 }} />
@@ -467,6 +516,20 @@ class MusicPlayerComponent extends Component {
                             </IconButton>
                         </Grid>
                     </Grid>
+                    <div className="playback-speed-selector">
+                        <button className="round-button" onClick={this.handleDecreaseSpeed}>
+                        -
+                        </button>
+                        <input
+                        type="text"
+                        value={this.state.selectedSpeed.toFixed(1)}
+                        onChange={this.handleInputChange}
+                        className="speed-input"
+                        />
+                        <button className="round-button" onClick={this.handleIncreaseSpeed}>
+                        +
+                        </button>
+                    </div>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={this.handleClose}>
