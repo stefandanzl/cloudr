@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"crypto/md5"
+
 	model "github.com/stefandanzl/cloudr/models"
 	"github.com/stefandanzl/cloudr/pkg/auth"
 	"github.com/stefandanzl/cloudr/pkg/cache"
@@ -75,7 +77,7 @@ func (handler Driver) List(ctx context.Context, path string, recursive bool) ([]
 	return res, err
 }
 
-// Get 获取文件内容
+// Get gets the file content
 func (handler Driver) Get(ctx context.Context, path string) (response.RSCloser, error) {
 	// 打开文件
 	file, err := os.Open(util.RelativePath(path))
@@ -87,13 +89,14 @@ func (handler Driver) Get(ctx context.Context, path string) (response.RSCloser, 
 	return file, nil
 }
 
-// Put 将文件流保存到指定目录
+// Put saves the file stream to the specified directory
 func (handler Driver) Put(ctx context.Context, file fsctx.FileHeader) error {
+	fmt.Println("PUT handler local")
 	defer file.Close()
 	fileInfo := file.Info()
 	dst := util.RelativePath(filepath.FromSlash(fileInfo.SavePath))
 
-	// 如果非 Overwrite，则检查是否有重名冲突
+	// If it is not Overwrite, check whether there is a duplicate name conflict
 	if fileInfo.Mode&fsctx.Overwrite != fsctx.Overwrite {
 		if util.Exists(dst) {
 			util.Log().Warning("File with the same name existed or unavailable: %s", dst)
@@ -101,7 +104,7 @@ func (handler Driver) Put(ctx context.Context, file fsctx.FileHeader) error {
 		}
 	}
 
-	// 如果目标目录不存在，创建
+	// If the target directory does not exist, create it
 	basePath := filepath.Dir(dst)
 	if !util.Exists(basePath) {
 		err := os.MkdirAll(basePath, Perm)
@@ -154,9 +157,29 @@ func (handler Driver) Put(ctx context.Context, file fsctx.FileHeader) error {
 		}
 	}
 
-	// 写入文件内容
-	_, err = io.Copy(out, file)
-	return err
+	hash := md5.New()
+	tr := io.TeeReader(file, hash)
+	// Write file content
+	_, err = io.Copy(out, tr)
+	if err != nil {
+		return err
+	}
+
+	// Get checksum value
+	// checksum := hex.EncodeToString(hash.Sum(nil))
+	fmt.Printf("Checksum: %x\n", hash.Sum(nil))
+
+	newfile := file.Info().Model.(*model.File)
+
+	if hash != nil {
+		return newfile.UpdateMetadata(map[string]string{
+			model.ChecksumMetadataKey: fmt.Sprintf("%x", hash.Sum(nil)),
+		})
+	} else {
+		fmt.Println("empty hash!")
+	}
+	return nil
+
 }
 
 func (handler Driver) Truncate(ctx context.Context, src string, size uint64) error {
@@ -218,7 +241,7 @@ func (handler Driver) Thumb(ctx context.Context, file *model.File) (*response.Co
 	}, nil
 }
 
-// Source 获取外链URL
+// Source Get external link URL
 func (handler Driver) Source(ctx context.Context, path string, ttl int64, isDownload bool, speed int) (string, error) {
 	file, ok := ctx.Value(fsctx.FileModelCtx).(model.File)
 	if !ok {

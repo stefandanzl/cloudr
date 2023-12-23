@@ -5,21 +5,23 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/stefandanzl/cloudr/pkg/util"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 	"strconv"
 	"strings"
 
+	"github.com/stefandanzl/cloudr/pkg/util"
+
+	"io"
+
+	"github.com/gin-gonic/gin"
 	model "github.com/stefandanzl/cloudr/models"
 	"github.com/stefandanzl/cloudr/pkg/cache"
 	"github.com/stefandanzl/cloudr/pkg/filesystem"
 	"github.com/stefandanzl/cloudr/pkg/filesystem/fsctx"
 	"github.com/stefandanzl/cloudr/pkg/serializer"
 	"github.com/stefandanzl/cloudr/pkg/wopi"
-	"github.com/gin-gonic/gin"
 )
 
 // SingleFileService 对单文件进行操作的五福，path为文件完整路径
@@ -47,26 +49,29 @@ type ArchiveService struct {
 	ID string `uri:"sessionID" binding:"required"`
 }
 
-// New 创建新文件
+// New creates a new file
 func (service *SingleFileService) Create(c *gin.Context) serializer.Response {
-	// 创建文件系统
+	// Create a file system
 	fs, err := filesystem.NewFileSystemFromContext(c)
 	if err != nil {
 		return serializer.Err(serializer.CodeCreateFSError, "", err)
 	}
 	defer fs.Recycle()
 
-	// 上下文
+	// context
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// 给文件系统分配钩子
+	// Assign hooks to the file system
 	fs.Use("BeforeUpload", filesystem.HookValidateFile)
-	fs.Use("AfterUpload", filesystem.GenericAfterUpload)
 
-	// 上传空文件
+	fs.Use("AfterUpload", filesystem.GenericAfterUpload)
+	// fs.Use("AfterUpload", filesystem.GenerateChecksum1)
+	fmt.Println("CREATE")
+
+	// Upload empty file
 	err = fs.Upload(ctx, &fsctx.FileStream{
-		File:        ioutil.NopCloser(strings.NewReader("")),
+		File:        io.NopCloser(strings.NewReader("")),
 		Size:        0,
 		VirtualPath: path.Dir(service.Path),
 		Name:        path.Base(service.Path),
@@ -80,7 +85,7 @@ func (service *SingleFileService) Create(c *gin.Context) serializer.Response {
 	}
 }
 
-// List 列出从机上的文件
+// List lists the files on the slave machine
 func (service *SlaveListService) List(c *gin.Context) serializer.Response {
 	// 创建文件系统
 	fs, err := filesystem.NewAnonymousFileSystem()
@@ -404,13 +409,14 @@ func (service *FileIDService) PreviewContent(ctx context.Context, c *gin.Context
 	}
 }
 
-// PutContent 更新文件内容
+// PutContent updates file content
 func (service *FileIDService) PutContent(ctx context.Context, c *gin.Context) serializer.Response {
-	// 创建上下文
+	fmt.Println("PUT")
+	// Create context
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// 取得文件大小
+	// Get file size
 	fileSize, err := strconv.ParseUint(c.Request.Header.Get("Content-Length"), 10, 64)
 	if err != nil {
 
@@ -458,7 +464,9 @@ func (service *FileIDService) PutContent(ctx context.Context, c *gin.Context) se
 	fs.Use("BeforeUpload", filesystem.HookResetPolicy)
 	fs.Use("BeforeUpload", filesystem.HookValidateFile)
 	fs.Use("BeforeUpload", filesystem.HookValidateCapacityDiff)
+	// fs.Use("BeforeUpload", filesystem.GenerateChecksumWrapper)
 	fs.Use("AfterUpload", filesystem.GenericAfterUpdate)
+	// fs.Use("AfterUpload", filesystem.GenerateChecksum1)
 
 	// 执行上传
 	uploadCtx = context.WithValue(uploadCtx, fsctx.FileModelCtx, originFile[0])

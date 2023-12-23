@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stefandanzl/cloudr/pkg/util"
 	"github.com/jinzhu/gorm"
+	"github.com/stefandanzl/cloudr/pkg/util"
 )
 
-// File 文件
+// File files
 type File struct {
-	// 表字段
+	// Table fields
 	gorm.Model
 	Name            string `gorm:"unique_index:idx_only_one"`
 	SourceName      string `gorm:"type:text"`
@@ -28,10 +28,10 @@ type File struct {
 	UploadSessionID *string `gorm:"index:session_id;unique_index:session_only_one"`
 	Metadata        string  `gorm:"type:text"`
 
-	// 关联模型
+	// association model
 	Policy Policy `gorm:"PRELOAD:false,association_autoupdate:false"`
 
-	// 数据库忽略字段
+	// Database ignores fields
 	Position           string            `gorm:"-"`
 	MetadataSerialized map[string]string `gorm:"-"`
 }
@@ -49,11 +49,11 @@ const (
 )
 
 func init() {
-	// 注册缓存用到的复杂结构
+	// Complex structure used to register the cache
 	gob.Register(File{})
 }
 
-// Create 创建文件记录
+// Create creates a file record
 func (file *File) Create() error {
 	tx := DB.Begin()
 
@@ -73,9 +73,9 @@ func (file *File) Create() error {
 	return tx.Commit().Error
 }
 
-// AfterFind 找到文件后的钩子
+// AfterFind hook after finding the file
 func (file *File) AfterFind() (err error) {
-	// 反序列化文件元数据
+	// Deserialize file metadata
 	if file.Metadata != "" {
 		err = json.Unmarshal([]byte(file.Metadata), &file.MetadataSerialized)
 	} else {
@@ -85,7 +85,7 @@ func (file *File) AfterFind() (err error) {
 	return
 }
 
-// BeforeSave Save策略前的钩子
+// BeforeSave Hook before Save strategy
 func (file *File) BeforeSave() (err error) {
 	if len(file.MetadataSerialized) > 0 {
 		metaValue, err := json.Marshal(&file.MetadataSerialized)
