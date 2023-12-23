@@ -440,7 +440,6 @@ class MusicPlayerComponent extends Component {
                     <audio
                         ref={this.myAudioRef}
                         src={items[currentIndex]?.src}
-                        playbackRate={this.state.selectedSpeed}
                     />
                     </MediaSession>
                     <div style={{ "padding-top": 8 }} />
