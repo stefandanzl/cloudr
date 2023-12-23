@@ -2,7 +2,7 @@ import React, { useCallback, useState, useEffect, useRef } from "react";
 // import { Document, Page, pdfjs } from "react-pdf";
 // import { Paper } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
-import { useLocation, useParams, useRouteMatch } from "react-router";
+import { useLocation, useParams, useRouteMatch, Prompt } from "react-router";
 import { baseURL, getBaseURL } from "../../middleware/Api";
 import { useDispatch } from "react-redux";
 import pathHelper from "../../utils/page";
@@ -661,7 +661,7 @@ export default function PDFViewer() {
 
     useEffect(() => {
 
-        if (pdfSettings.changePrompt) {
+        if (pdfSettings.changePrompt && contentState !== "unchanged") {
             const handler = (event) => {
                 event.preventDefault();
                 event.returnValue = "";
@@ -669,13 +669,13 @@ export default function PDFViewer() {
 
             // https://www.wpeform.io/blog/exit-prompt-on-window-close-react-app/
             // if the form is NOT unchanged, then set the onbeforeunload
-            if (contentState !== "unchanged") {
-                window.addEventListener("beforeunload", handler);
-                // clean it up, if the dirty state changes
-                return () => {
-                    window.removeEventListener("beforeunload", handler);
-                };
-            }
+           
+            window.addEventListener("beforeunload", handler);
+            // clean it up, if the dirty state changes
+            return () => {
+                window.removeEventListener("beforeunload", handler);
+            };
+            
         }
         // eslint-disable-line 
         //   return () => {};
@@ -718,6 +718,10 @@ export default function PDFViewer() {
     const classes = useStyles();
     return (
         <div className={classes.layout}>
+            <Prompt
+                when={pdfSettings.changePrompt && contentState !== "unchanged"}
+                message='You have unsaved changes, are you sure you want to leave?'
+            />
             {pdfSettings.saveButton && <SaveButton onClick={save} status={status} />}
             <div 
             style={{ margin: 0, top: 84, bottom: "auto", right: 20, left: "auto", zIndex: 1500, position: "fixed" }} >
