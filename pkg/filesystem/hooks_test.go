@@ -3,6 +3,11 @@ package filesystem
 import (
 	"context"
 	"errors"
+	"io/ioutil"
+	"net/http"
+	"strings"
+	"testing"
+
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stefandanzl/cloudr/pkg/cache"
 	"github.com/stefandanzl/cloudr/pkg/conf"
@@ -11,17 +16,14 @@ import (
 	"github.com/stefandanzl/cloudr/pkg/mocks/requestmock"
 	"github.com/stefandanzl/cloudr/pkg/request"
 	"github.com/stefandanzl/cloudr/pkg/serializer"
-	"io/ioutil"
-	"net/http"
-	"strings"
-	"testing"
 
-	model "github.com/stefandanzl/cloudr/models"
 	"github.com/jinzhu/gorm"
+	model "github.com/stefandanzl/cloudr/models"
 	"github.com/stretchr/testify/assert"
 	testMock "github.com/stretchr/testify/mock"
 )
 
+// lint:ignore
 func TestGenericBeforeUpload(t *testing.T) {
 	asserts := assert.New(t)
 	file := &fsctx.FileStream{

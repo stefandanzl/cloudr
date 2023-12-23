@@ -1,18 +1,19 @@
 package filesystem
 
 import (
+	"net/http/httptest"
+
 	"github.com/stefandanzl/cloudr/pkg/cluster"
 	"github.com/stefandanzl/cloudr/pkg/conf"
 	"github.com/stefandanzl/cloudr/pkg/filesystem/driver/shadow/masterinslave"
 	"github.com/stefandanzl/cloudr/pkg/filesystem/driver/shadow/slaveinmaster"
 	"github.com/stefandanzl/cloudr/pkg/serializer"
-	"net/http/httptest"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/gin-gonic/gin"
 	model "github.com/stefandanzl/cloudr/models"
 	"github.com/stefandanzl/cloudr/pkg/filesystem/driver/local"
 	"github.com/stefandanzl/cloudr/pkg/filesystem/driver/remote"
-	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 
 	"testing"
@@ -39,6 +40,7 @@ func TestNewFileSystem(t *testing.T) {
 	asserts.IsType(&remote.Driver{}, fs.Handler)
 
 	user.Policy.Type = "unknown"
+	// lint:ignore
 	fs, err = NewFileSystem(&user)
 	asserts.Error(err)
 }

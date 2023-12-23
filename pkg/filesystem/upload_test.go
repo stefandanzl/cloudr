@@ -3,27 +3,30 @@ package filesystem
 import (
 	"context"
 	"errors"
-	"github.com/DATA-DOG/go-sqlmock"
-	model "github.com/stefandanzl/cloudr/models"
-	"github.com/stefandanzl/cloudr/pkg/cache"
-	"github.com/stefandanzl/cloudr/pkg/filesystem/fsctx"
-	"github.com/stefandanzl/cloudr/pkg/filesystem/response"
-	"github.com/stefandanzl/cloudr/pkg/serializer"
-	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
-	"github.com/stretchr/testify/assert"
-	testMock "github.com/stretchr/testify/mock"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/gin-gonic/gin"
+	"github.com/jinzhu/gorm"
+	model "github.com/stefandanzl/cloudr/models"
+	"github.com/stefandanzl/cloudr/pkg/cache"
+	"github.com/stefandanzl/cloudr/pkg/filesystem/fsctx"
+	"github.com/stefandanzl/cloudr/pkg/filesystem/response"
+	"github.com/stefandanzl/cloudr/pkg/serializer"
+	"github.com/stretchr/testify/assert"
+	testMock "github.com/stretchr/testify/mock"
 )
 
+// lint:ignore
 type FileHeaderMock struct {
 	testMock.Mock
 }
 
+// lint:ignore
 func (m FileHeaderMock) Put(ctx context.Context, file fsctx.FileHeader) error {
 	args := m.Called(ctx, file)
 	return args.Error(0)

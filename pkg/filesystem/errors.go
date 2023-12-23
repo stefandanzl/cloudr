@@ -6,6 +6,7 @@ import (
 	"github.com/stefandanzl/cloudr/pkg/serializer"
 )
 
+// lint:ignore
 var (
 	ErrUnknownPolicyType        = serializer.NewError(serializer.CodeInternalSetting, "Unknown policy type", nil)
 	ErrFileSizeTooBig           = serializer.NewError(serializer.CodeFileTooLarge, "File is too large", nil)
