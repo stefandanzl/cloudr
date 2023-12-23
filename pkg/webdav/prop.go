@@ -24,7 +24,7 @@ type FileDeadProps struct {
 	*model.File
 }
 
-// 实现 webdav.DeadPropsHolder 接口，不能在models.file里面定义
+// Implement the webdav.DeadPropsHolder interface and cannot be defined in models.file             实现 webdav.DeadPropsHolder 接口，不能在models.file里面定义
 func (file *FileDeadProps) DeadProps() (map[xml.Name]Property, error) {
 	return map[xml.Name]Property{
 		xml.Name{Space: "http://owncloud.org/ns", Local: "checksums"}: {

@@ -2,6 +2,12 @@ package filesystem
 
 import (
 	"context"
+	"io/ioutil"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
 	model "github.com/stefandanzl/cloudr/models"
 	"github.com/stefandanzl/cloudr/pkg/cache"
 	"github.com/stefandanzl/cloudr/pkg/cluster"
@@ -9,17 +15,12 @@ import (
 	"github.com/stefandanzl/cloudr/pkg/filesystem/fsctx"
 	"github.com/stefandanzl/cloudr/pkg/serializer"
 	"github.com/stefandanzl/cloudr/pkg/util"
-	"io/ioutil"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
 )
 
-// Hook 钩子函数
+// Hook hook function                   Hook 钩子函数
 type Hook func(ctx context.Context, fs *FileSystem, file fsctx.FileHeader) error
 
-// Use 注入钩子
+// Use injection hook             Use 注入钩子
 func (fs *FileSystem) Use(name string, hook Hook) {
 	if fs.Hooks == nil {
 		fs.Hooks = make(map[string][]Hook)
@@ -31,7 +32,7 @@ func (fs *FileSystem) Use(name string, hook Hook) {
 	fs.Hooks[name] = []Hook{hook}
 }
 
-// CleanHooks 清空钩子,name为空表示全部清空
+// CleanHooks clears hooks. If the name is empty, it means clearing all                        CleanHooks 清空钩子,name为空表示全部清空
 func (fs *FileSystem) CleanHooks(name string) {
 	if name == "" {
 		fs.Hooks = nil
@@ -40,8 +41,8 @@ func (fs *FileSystem) CleanHooks(name string) {
 	}
 }
 
-// Trigger 触发钩子,遇到第一个错误时
-// 返回错误，后续钩子不会继续执行
+// Trigger triggers the hook when the first error is encountered                                       Trigger 触发钩子,遇到第一个错误时
+// An error is returned and subsequent hooks will not continue to execute.                            返回错误，后续钩子不会继续执行
 func (fs *FileSystem) Trigger(ctx context.Context, name string, file fsctx.FileHeader) error {
 	if hooks, ok := fs.Hooks[name]; ok {
 		for _, hook := range hooks {
@@ -52,6 +53,29 @@ func (fs *FileSystem) Trigger(ctx context.Context, name string, file fsctx.FileH
 			}
 		}
 	}
+	return nil
+}
+
+// HookCalculateChecksum is a custom hook function to calculate checksum and store it as metadata.
+func HookCalculateChecksum(ctx context.Context, fs *FileSystem, file fsctx.FileHeader) error {
+	// Check if the file system has the capability to calculate checksum (you may need to modify this based on your implementation)
+	if checker, ok := fs.Handler.(ChecksumCapabilityChecker); ok {
+		// Calculate checksum
+		checksum, err := checker.CalculateChecksum(file)
+		if err != nil {
+			return err
+		}
+
+		// Update metadata with checksum
+		file := file.Info().Model.(*model.File)
+		err = file.UpdateMetadata(map[string]string{
+			model.ChecksumMetadataKey: checksum,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -121,7 +145,7 @@ func HookDeleteTempFile(ctx context.Context, fs *FileSystem, file fsctx.FileHead
 	return nil
 }
 
-// HookCleanFileContent 清空文件内容
+// HookCleanFileContent clears file content               HookCleanFileContent 清空文件内容
 func HookCleanFileContent(ctx context.Context, fs *FileSystem, file fsctx.FileHeader) error {
 	// 清空内容
 	return fs.Handler.Put(ctx, &fsctx.FileStream{
@@ -150,7 +174,7 @@ func HookCancelContext(ctx context.Context, fs *FileSystem, file fsctx.FileHeade
 	return nil
 }
 
-// HookUpdateSourceName 更新文件SourceName
+// HookUpdateSourceName updates file SourceName                            HookUpdateSourceName 更新文件SourceName
 func HookUpdateSourceName(ctx context.Context, fs *FileSystem, file fsctx.FileHeader) error {
 	originFile, ok := ctx.Value(fsctx.FileModelCtx).(model.File)
 	if !ok {
@@ -159,7 +183,7 @@ func HookUpdateSourceName(ctx context.Context, fs *FileSystem, file fsctx.FileHe
 	return originFile.UpdateSourceName(originFile.SourceName)
 }
 
-// GenericAfterUpdate 文件内容更新后
+// GenericAfterUpdate After the file content is updated                   GenericAfterUpdate 文件内容更新后
 func GenericAfterUpdate(ctx context.Context, fs *FileSystem, newFile fsctx.FileHeader) error {
 	// 更新文件尺寸
 	originFile, ok := ctx.Value(fsctx.FileModelCtx).(model.File)
@@ -190,17 +214,17 @@ func SlaveAfterUpload(session *serializer.UploadSession) Hook {
 	}
 }
 
-// GenericAfterUpload 文件上传完成后，包含数据库操作
+// GenericAfterUpload After the file upload is completed, including database operations                       GenericAfterUpload 文件上传完成后，包含数据库操作
 func GenericAfterUpload(ctx context.Context, fs *FileSystem, fileHeader fsctx.FileHeader) error {
 	fileInfo := fileHeader.Info()
 
-	// 创建或查找根目录
+	// Create or find the root directory                      创建或查找根目录
 	folder, err := fs.CreateDirectory(ctx, fileInfo.VirtualPath)
 	if err != nil {
 		return err
 	}
 
-	// 检查文件是否存在
+	// Check if the file exists                     检查文件是否存在
 	if ok, file := fs.IsChildFileExist(
 		folder,
 		fileInfo.FileName,
@@ -212,7 +236,7 @@ func GenericAfterUpload(ctx context.Context, fs *FileSystem, fileHeader fsctx.Fi
 		return ErrFileExisted
 	}
 
-	// 向数据库中插入记录
+	// Insert records into database                            向数据库中插入记录
 	file, err := fs.AddFile(ctx, folder, fileHeader)
 	if err != nil {
 		return ErrInsertFileRecord
@@ -228,7 +252,7 @@ func HookClearFileHeaderSize(ctx context.Context, fs *FileSystem, fileHeader fsc
 	return nil
 }
 
-// HookTruncateFileTo 将物理文件截断至 size
+// HookTruncateFileTo truncates the physical file to size                     HookTruncateFileTo 将物理文件截断至 size
 func HookTruncateFileTo(size uint64) Hook {
 	return func(ctx context.Context, fs *FileSystem, fileHeader fsctx.FileHeader) error {
 		if handler, ok := fs.Handler.(local.Driver); ok {
@@ -239,7 +263,7 @@ func HookTruncateFileTo(size uint64) Hook {
 	}
 }
 
-// HookChunkUploadFinished 单个分片上传结束后
+// HookChunkUploadFinished After a single fragment upload is completed                         HookChunkUploadFinished 单个分片上传结束后
 func HookChunkUploaded(ctx context.Context, fs *FileSystem, fileHeader fsctx.FileHeader) error {
 	fileInfo := fileHeader.Info()
 
@@ -264,7 +288,7 @@ func HookPopPlaceholderToFile(picInfo string) Hook {
 	}
 }
 
-// HookChunkUploadFinished 分片上传结束后处理文件
+// HookChunkUploadFinished Processes files after multipart upload                           HookChunkUploadFinished 分片上传结束后处理文件
 func HookDeleteUploadSession(id string) Hook {
 	return func(ctx context.Context, fs *FileSystem, fileHeader fsctx.FileHeader) error {
 		cache.Deletes([]string{id}, UploadSessionCachePrefix)
@@ -272,8 +296,8 @@ func HookDeleteUploadSession(id string) Hook {
 	}
 }
 
-// NewWebdavAfterUploadHook 每次创建一个新的钩子函数 rclone 在 PUT 请求里有 OC-Checksum 字符串
-// 和 X-OC-Mtime
+// NewWebdavAfterUploadHook creates a new hook function rclone each time and has the OC-Checksum string in the PUT request.                                        NewWebdavAfterUploadHook 每次创建一个新的钩子函数 rclone 在 PUT 请求里有 OC-Checksum 字符串
+// and X-OC-Mtime                            和 X-OC-Mtime
 func NewWebdavAfterUploadHook(request *http.Request) func(ctx context.Context, fs *FileSystem, newFile fsctx.FileHeader) error {
 	var modtime time.Time
 	if timeVal := request.Header.Get("X-OC-Mtime"); timeVal != "" {

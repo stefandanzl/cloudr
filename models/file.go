@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/stefandanzl/cloudr/pkg/util"
 	"github.com/jinzhu/gorm"
+	"github.com/stefandanzl/cloudr/pkg/util"
 )
 
 // File 文件
 type File struct {
-	// 表字段
+	// table fields    表字段
 	gorm.Model
 	Name            string `gorm:"unique_index:idx_only_one"`
 	SourceName      string `gorm:"type:text"`
@@ -28,10 +28,10 @@ type File struct {
 	UploadSessionID *string `gorm:"index:session_id;unique_index:session_only_one"`
 	Metadata        string  `gorm:"type:text"`
 
-	// 关联模型
+	// association model     关联模型
 	Policy Policy `gorm:"PRELOAD:false,association_autoupdate:false"`
 
-	// 数据库忽略字段
+	// Database ignores fields   数据库忽略字段
 	Position           string            `gorm:"-"`
 	MetadataSerialized map[string]string `gorm:"-"`
 }
@@ -53,7 +53,7 @@ func init() {
 	gob.Register(File{})
 }
 
-// Create 创建文件记录
+// Create creates a file record      Create 创建文件记录
 func (file *File) Create() error {
 	tx := DB.Begin()
 
@@ -73,9 +73,9 @@ func (file *File) Create() error {
 	return tx.Commit().Error
 }
 
-// AfterFind 找到文件后的钩子
+// AfterFind hook after finding the file          AfterFind 找到文件后的钩子
 func (file *File) AfterFind() (err error) {
-	// 反序列化文件元数据
+	// Deserialize file metadata         反序列化文件元数据
 	if file.Metadata != "" {
 		err = json.Unmarshal([]byte(file.Metadata), &file.MetadataSerialized)
 	} else {
@@ -85,7 +85,7 @@ func (file *File) AfterFind() (err error) {
 	return
 }
 
-// BeforeSave Save策略前的钩子
+// BeforeSave Hook before Save strategy                  BeforeSave Save策略前的钩子
 func (file *File) BeforeSave() (err error) {
 	if len(file.MetadataSerialized) > 0 {
 		metaValue, err := json.Marshal(&file.MetadataSerialized)
@@ -146,7 +146,7 @@ func GetFilesByKeywords(uid uint, parents []uint, keywords ...interface{}) ([]Fi
 		conditions string
 	)
 
-	// 生成查询条件
+	// Generate query conditions     生成查询条件
 	for i := 0; i < len(keywords); i++ {
 		conditions += "name like ?"
 		if i != len(keywords)-1 {
@@ -223,8 +223,8 @@ func RemoveFilesWithSoftLinks(files []File) ([]File, error) {
 		}
 	}
 
-	// 过滤具有软连接的文件
-	// TODO: 优化复杂度
+	// Filter files with soft links               过滤具有软连接的文件
+	// TODO: Optimize complexity                TODO: 优化复杂度
 	if len(filesWithSoftLinks) == 0 {
 		filteredFiles = files
 	} else {
@@ -319,7 +319,7 @@ func (file *File) UpdatePicInfo(value string) error {
 	return DB.Model(&file).Set("gorm:association_autoupdate", false).UpdateColumns(File{PicInfo: value}).Error
 }
 
-// UpdateMetadata 新增或修改文件的元信息
+// UpdateMetadata adds or modifies file metainformation                                   UpdateMetadata 新增或修改文件的元信息
 func (file *File) UpdateMetadata(data map[string]string) error {
 	if file.MetadataSerialized == nil {
 		file.MetadataSerialized = make(map[string]string)

@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/stefandanzl/cloudr/pkg/util"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -13,13 +12,15 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/stefandanzl/cloudr/pkg/util"
+
+	"github.com/gin-gonic/gin"
 	model "github.com/stefandanzl/cloudr/models"
 	"github.com/stefandanzl/cloudr/pkg/cache"
 	"github.com/stefandanzl/cloudr/pkg/filesystem"
 	"github.com/stefandanzl/cloudr/pkg/filesystem/fsctx"
 	"github.com/stefandanzl/cloudr/pkg/serializer"
 	"github.com/stefandanzl/cloudr/pkg/wopi"
-	"github.com/gin-gonic/gin"
 )
 
 // SingleFileService 对单文件进行操作的五福，path为文件完整路径
@@ -47,7 +48,7 @@ type ArchiveService struct {
 	ID string `uri:"sessionID" binding:"required"`
 }
 
-// New 创建新文件
+// New creates a new file                 New 创建新文件
 func (service *SingleFileService) Create(c *gin.Context) serializer.Response {
 	// 创建文件系统
 	fs, err := filesystem.NewFileSystemFromContext(c)
@@ -64,7 +65,7 @@ func (service *SingleFileService) Create(c *gin.Context) serializer.Response {
 	fs.Use("BeforeUpload", filesystem.HookValidateFile)
 	fs.Use("AfterUpload", filesystem.GenericAfterUpload)
 
-	// 上传空文件
+	// Upload empty file        上传空文件
 	err = fs.Upload(ctx, &fsctx.FileStream{
 		File:        ioutil.NopCloser(strings.NewReader("")),
 		Size:        0,
@@ -80,7 +81,7 @@ func (service *SingleFileService) Create(c *gin.Context) serializer.Response {
 	}
 }
 
-// List 列出从机上的文件
+// List lists the files on the slave machine                 List 列出从机上的文件
 func (service *SlaveListService) List(c *gin.Context) serializer.Response {
 	// 创建文件系统
 	fs, err := filesystem.NewAnonymousFileSystem()
@@ -98,7 +99,7 @@ func (service *SlaveListService) List(c *gin.Context) serializer.Response {
 	return serializer.Response{Data: string(res)}
 }
 
-// DownloadArchived 通过预签名 URL 打包下载
+// DownloadArchived packages downloads via a pre-signed URL                 DownloadArchived 通过预签名 URL 打包下载
 func (service *ArchiveService) DownloadArchived(ctx context.Context, c *gin.Context) serializer.Response {
 	userRaw, exist := cache.Get("archive_user_" + service.ID)
 	if !exist {
@@ -135,7 +136,7 @@ func (service *ArchiveService) DownloadArchived(ctx context.Context, c *gin.Cont
 	}
 }
 
-// Download 签名的匿名文件下载
+// Download Signed Anonymous Document Download                  Download 签名的匿名文件下载
 func (service *FileAnonymousGetService) Download(ctx context.Context, c *gin.Context) serializer.Response {
 	fs, err := filesystem.NewAnonymousFileSystem()
 	if err != nil {
@@ -164,7 +165,7 @@ func (service *FileAnonymousGetService) Download(ctx context.Context, c *gin.Con
 	}
 }
 
-// Source 重定向到文件的有效原始链接
+// Source redirects to a valid original link to the file                              Source 重定向到文件的有效原始链接
 func (service *FileAnonymousGetService) Source(ctx context.Context, c *gin.Context) serializer.Response {
 	fs, err := filesystem.NewAnonymousFileSystem()
 	if err != nil {
@@ -192,7 +193,7 @@ func (service *FileAnonymousGetService) Source(ctx context.Context, c *gin.Conte
 	}
 }
 
-// CreateDocPreviewSession 创建DOC文件预览会话，返回预览地址
+// CreateDocPreviewSession creates a DOC file preview session and returns the preview address                          CreateDocPreviewSession 创建DOC文件预览会话，返回预览地址
 func (service *FileIDService) CreateDocPreviewSession(ctx context.Context, c *gin.Context, editable bool) serializer.Response {
 	// 创建文件系统
 	fs, err := filesystem.NewFileSystemFromContext(c)
@@ -305,7 +306,7 @@ func (service *FileIDService) CreateDownloadSession(ctx context.Context, c *gin.
 	}
 }
 
-// Download 通过签名URL的文件下载，无需登录
+// Download File download via signed URL, no login required                                       Download 通过签名URL的文件下载，无需登录
 func (service *DownloadService) Download(ctx context.Context, c *gin.Context) serializer.Response {
 	// 创建文件系统
 	fs, err := filesystem.NewFileSystemFromContext(c)
@@ -345,8 +346,8 @@ func (service *DownloadService) Download(ctx context.Context, c *gin.Context) se
 	}
 }
 
-// PreviewContent 预览文件，需要登录会话, isText - 是否为文本文件，文本文件会
-// 强制经由服务端中转
+// PreviewContent preview file, requires login session, isText - whether it is a text file, text file will                          PreviewContent 预览文件，需要登录会话, isText - 是否为文本文件，文本文件会
+// Force transfer via server                                                                                                         强制经由服务端中转
 func (service *FileIDService) PreviewContent(ctx context.Context, c *gin.Context, isText bool) serializer.Response {
 	// 创建文件系统
 	fs, err := filesystem.NewFileSystemFromContext(c)
@@ -404,13 +405,13 @@ func (service *FileIDService) PreviewContent(ctx context.Context, c *gin.Context
 	}
 }
 
-// PutContent 更新文件内容
+// PutContent updates file content                                                                    PutContent 更新文件内容
 func (service *FileIDService) PutContent(ctx context.Context, c *gin.Context) serializer.Response {
-	// 创建上下文
+	// Create context                                   创建上下文
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// 取得文件大小
+	// Get file size                                   取得文件大小
 	fileSize, err := strconv.ParseUint(c.Request.Header.Get("Content-Length"), 10, 64)
 	if err != nil {
 
@@ -424,14 +425,14 @@ func (service *FileIDService) PutContent(ctx context.Context, c *gin.Context) se
 		Mode:     fsctx.Overwrite,
 	}
 
-	// 创建文件系统
+	// Create file system                            创建文件系统
 	fs, err := filesystem.NewFileSystemFromContext(c)
 	if err != nil {
 		return serializer.Err(serializer.CodeCreateFSError, "", err)
 	}
 	uploadCtx := context.WithValue(ctx, fsctx.GinCtx, c)
 
-	// 取得现有文件
+	// Get existing files                          取得现有文件
 	fileID, _ := c.Get("object_id")
 	originFile, _ := model.GetFilesByIDs([]uint{fileID.(uint)}, fs.User.ID)
 	if len(originFile) == 0 {
@@ -439,10 +440,10 @@ func (service *FileIDService) PutContent(ctx context.Context, c *gin.Context) se
 	}
 	fileData.Name = originFile[0].Name
 
-	// 检查此文件是否有软链接
+	// Check if this file has a soft link                       检查此文件是否有软链接
 	fileList, err := model.RemoveFilesWithSoftLinks([]model.File{originFile[0]})
 	if err == nil && len(fileList) == 0 {
-		// 如果包含软连接，应重新生成新文件副本，并更新source_name
+		// If soft links are included, a new copy of the file should be regenerated and source_name should be updated.                       如果包含软连接，应重新生成新文件副本，并更新source_name
 		originFile[0].SourceName = fs.GenerateSavePath(uploadCtx, &fileData)
 		fileData.Mode &= ^fsctx.Overwrite
 		fs.Use("AfterUpload", filesystem.HookUpdateSourceName)
@@ -454,13 +455,13 @@ func (service *FileIDService) PutContent(ctx context.Context, c *gin.Context) se
 		fs.Use("AfterValidateFailed", filesystem.HookClearFileSize)
 	}
 
-	// 给文件系统分配钩子
+	// Assign hooks to the file system                         给文件系统分配钩子
 	fs.Use("BeforeUpload", filesystem.HookResetPolicy)
 	fs.Use("BeforeUpload", filesystem.HookValidateFile)
 	fs.Use("BeforeUpload", filesystem.HookValidateCapacityDiff)
 	fs.Use("AfterUpload", filesystem.GenericAfterUpdate)
 
-	// 执行上传
+	// Perform upload                           执行上传
 	uploadCtx = context.WithValue(uploadCtx, fsctx.FileModelCtx, originFile[0])
 	err = fs.Upload(uploadCtx, &fileData)
 	if err != nil {
