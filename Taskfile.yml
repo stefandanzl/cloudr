@@ -1,5 +1,8 @@
 version: '3'
 
+# install task on windows with `choco install go-task`
+
+
 tasks:
   help:
     cmds:
@@ -8,14 +11,17 @@ tasks:
   yarn_install:
     dir: assets
     cmds:
-      - yarn install
+      - yarn install --network-timeout 100000
 
   go_mod_tidy:
     cmds:
       - go mod tidy
 
   setup:
-    deps: [yarn_install, go_mod_tidy]
+    cmds:
+      - cmd: yarn cache clean
+      - task: yarn_install
+      - task: go_mod_tidy
 
   # Universal tasks
   yarn_build:
@@ -26,7 +32,7 @@ tasks:
   zip:
     cmds:
       - rm -r assets.zip || echo "No assets.zip file"
-      - cp -r C:/PROJECTS/PROGRAMMIEREN/Javascript/PSPDFKIT/pspdfkit-lib-2023.5.2 assets/build/pspdfkit-lib/
+      - cp -r C:/PROJECTS/PROGRAMMIEREN/Javascript/PSPDFKIT/pspdfkit-2023.5.2 assets/build/pspdfkit-lib/
       - zip -r assets.zip assets/build
 
   build_windows:
