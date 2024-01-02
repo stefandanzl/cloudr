@@ -7,8 +7,11 @@ package webdav // import "golang.org/x/net/webdav"
 
 import (
 	"context"
+	"encoding/hex"
+	"encoding/xml"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -17,6 +20,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"crypto/sha1"
 
 	model "github.com/stefandanzl/cloudr/models"
 	"github.com/stefandanzl/cloudr/pkg/filesystem"
@@ -733,6 +738,93 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request, fs *fil
 		if err != nil {
 			return err
 		}
+
+		fmt.Println(reqPath)
+
+		// var pstats []Propstat
+		// if pf.Propname != nil {
+		// 	pnames, err := propnames(ctx, fs, ls, info)
+		// 	if err != nil {
+		// 		return err
+		// 	}
+		// 	pstat := Propstat{Status: http.StatusOK}
+		// 	for _, xmlname := range pnames {
+		// 		pstat.Props = append(pstat.Props, Property{XMLName: xmlname})
+		// 	}
+		// 	pstats = append(pstats, pstat)
+		// } else if pf.Allprop != nil {
+		// 	pstats, err = allprop(ctx, fs, ls, info, pf.Prop)
+		// } else {
+		// 	pstats, err = props(ctx, fs, ls, info, pf.Prop)
+		// }
+		var checksumBytes []byte
+
+		if !info.IsDir() {
+			exist, file := fs.IsFileExist(reqPath)
+			if !exist {
+				return err
+			}
+			fs.SetTargetFile(&[]model.File{*file})
+			defer fs.CleanTargets()
+
+			// id := []uint{file.ID}
+
+			fmt.Println("reqPath: ", reqPath)
+			// fmt.Println("fileTarget ", fs.FileTarget[0])
+			// fmt.Println("fileTarget ", fs.FileTarget[0].SourceName)
+			id := fs.FileTarget[0].ID
+			// fmt.Println(id)
+
+			rs, err := fs.GetContent(ctx, id)
+			if err != nil {
+				if err == filesystem.ErrObjectNotExist {
+					return err
+				}
+				return err
+			}
+			defer rs.Close()
+
+			// length, err := rs.Seek(0, io.SeekEnd)
+			// // fmt.Println(length)
+			// if err != nil {
+			// 	fmt.Println("Error seeking to the end:", err)
+			// 	return err
+			// }
+			_, err = rs.Seek(0, io.SeekStart)
+			if err != nil {
+				return err
+			}
+			// fmt.Println(uint64(length) == info.GetSize())
+			buffer := make([]byte, info.GetSize())
+			_, err = io.ReadFull(rs, buffer) //n
+			if err != nil && err != io.EOF {
+				return fmt.Errorf("error reading content: %v", err)
+			}
+			// fmt.Println("> ", n)
+			// fmt.Println(buffer)
+
+			hash := sha1.New()
+			hash.Write(buffer)
+			checksum := hex.EncodeToString(hash.Sum(nil))
+			fmt.Println(checksum)
+			checksumBytes = []byte(checksum)
+			// fmt.Println(checksumBytes)
+
+			// // Add custom property "mychecksum"
+			// pstats = append(pstats, Propstat{
+			// 	Status: http.StatusOK,
+			// 	Props: []Property{
+			// 		{
+			// 			XMLName:  xml.Name{Local: "mychecksum"},
+			// 			InnerXML: checksumBytes,
+			// 		},
+			// 	},
+			// })
+
+		} else {
+			checksumBytes = []byte{}
+		}
+
 		var pstats []Propstat
 		if pf.Propname != nil {
 			pnames, err := propnames(ctx, fs, ls, info)
@@ -743,12 +835,36 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request, fs *fil
 			for _, xmlname := range pnames {
 				pstat.Props = append(pstat.Props, Property{XMLName: xmlname})
 			}
+
+			// Add custom property "mychecksum" to the list of properties
+			pstat.Props = append(pstat.Props, Property{
+				XMLName:  xml.Name{Local: "D:checksum"},
+				InnerXML: checksumBytes,
+			})
+
 			pstats = append(pstats, pstat)
+			// fmt.Println(">1>")
 		} else if pf.Allprop != nil {
 			pstats, err = allprop(ctx, fs, ls, info, pf.Prop)
+			// Add custom property "mychecksum" to the list of properties
+			pstats[0].Props = append(pstats[0].Props, Property{
+				XMLName:  xml.Name{Local: "D:checksum"},
+				InnerXML: checksumBytes,
+			})
+			// fmt.Println(">2>")
+
 		} else {
 			pstats, err = props(ctx, fs, ls, info, pf.Prop)
+
+			// Add custom property "mychecksum" to the list of properties
+			pstats[0].Props = append(pstats[0].Props, Property{
+				XMLName:  xml.Name{Local: "D:checksum"},
+				InnerXML: checksumBytes,
+			})
+			// fmt.Println(">3>")
+
 		}
+
 		if err != nil {
 			return err
 		}
