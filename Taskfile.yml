@@ -47,13 +47,28 @@ tasks:
     env:
       GOOS: linux
 
+  build_raspi:
+    cmds:
+      - go build -o dev/cloudr
+    env:
+      GOOS: linux
+      GOARCH: arm64
+
   build_docker:
     cmds:
       - docker build . -t ghcr.io/stefandanzl/cloudr:latest
 
+  build_docker_raspi:
+    cmds:
+      - docker build . -t ghcr.io/stefandanzl/cloudr:raspi
+
   push_docker:
     cmds:
       - docker push ghcr.io/stefandanzl/cloudr:latest
+
+  push_docker_raspi:
+  cmds:
+    - docker push ghcr.io/stefandanzl/cloudr:raspi
 
   go_run:
     cmds:
@@ -159,4 +174,12 @@ tasks:
       - task: build_linux
       - task: build_docker
       - task: push_docker
+      - task: finished
+
+
+  docker-raspi:
+    cmds:
+      - task: build_raspi
+      - task: build_docker_raspi
+      - task: push_docker_raspi
       - task: finished

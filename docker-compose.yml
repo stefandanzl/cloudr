@@ -7,9 +7,9 @@ services:
     ports:
       - "5212:5212"
     volumes:
-      - /portainer/cloudr/conf.ini:/cloudr/conf.ini
-      - /portainer/cloudr/cloudr.db:/cloudr/cloudr.db
-      - /portainer/cloudr/uploads:/cloudr/uploads
-      - /portainer/cloudr/avatar:/cloudr/avatar
-      - /portainer/cloudr/mount:/cloudr/mount
+#      - /docker/cloudr/conf.ini:/cloudr/conf.ini
+#      - /docker/cloudr/cloudr.db:/cloudr/cloudr.db
+      - /docker/cloudr/uploads:/cloudr/uploads
+      - /docker/cloudr/avatar:/cloudr/avatar
+      - /docker/cloudr/mount:/cloudr/mount
 
