@@ -2,16 +2,16 @@ version: "3.8"
 services:
   cloudr:
     container_name: cloudr
-    image: docker pull ghcr.io/stefandanzl/cloudr:latest
+    image: ghcr.io/stefandanzl/cloudr:latest
     restart: unless-stopped
     ports:
       - "5212:5212"
     volumes:
-      - /portainer/cloudr/temp_data:/data
-      - /portainer/cloudr/uploads:/cloudr/uploads
-      - /portainer/cloudr/conf.ini:/cloudr/conf.ini
-      - /portainer/cloudr/cloudreve.db:/cloudr/cloudr.db
-      - ./portainer/cloudr/avatar:/cloudr/avatar
+      - /docker/cloudr/temp_data:/data
+      - /docker/cloudr/uploads:/cloudr/uploads
+      - /docker/cloudr/conf.ini:/cloudr/conf.ini
+      - /docker/cloudr/cloudreve.db:/cloudr/cloudr.db
+      - /docker/cloudr/avatar:/cloudr/avatar
     depends_on:
       - aria2
   aria2:
@@ -22,5 +22,5 @@ services:
       - RPC_SECRET=your_aria_rpc_token
       - RPC_PORT=6800
     volumes:
-      - /portainer/cloudr/aria2/config:/config
-      - /portainer/cloudr/temp_data:/data
+      - /docker/cloudr/aria2/config:/config
+      - /docker/cloudr/temp_data:/data
