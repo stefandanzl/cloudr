@@ -10,7 +10,7 @@ services:
       - /docker/cloudr/temp_data:/data
       - /docker/cloudr/uploads:/cloudr/uploads
       - /docker/cloudr/conf.ini:/cloudr/conf.ini
-      - /docker/cloudr/cloudreve.db:/cloudr/cloudr.db
+      - /docker/cloudr/cloudr.db:/cloudr/cloudr.db
       - /docker/cloudr/avatar:/cloudr/avatar
     depends_on:
       - aria2
