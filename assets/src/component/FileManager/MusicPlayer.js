@@ -81,22 +81,24 @@ class MusicPlayerComponent extends Component {
         super(props);
 
         // Try to retrieve the selected speed from localStorage, or set a default value
-        const storedSpeed = localStorage.getItem('selectedSpeed');
-        const initialSpeed = storedSpeed ? parseFloat(storedSpeed) : 1.0;
+        // const storedSpeed = localStorage.getItem('selectedSpeed');
+        // const initialSpeed = storedSpeed ? parseFloat(storedSpeed) : 1.0;
 
 
         this.state = {
             items: [],
             currentIndex: 0,
             //isOpen: false,
-            //isPlay:false,
+            isPlay: true,
             currentTime: 0,
             duration: 0,
             progressText: "00:00/00:00",
             looptype: 0,
-            selectedSpeed: initialSpeed,
+            selectedSpeed: 1.0,
             // New settings state
-            saveIntervalId: null,
+            // saveIntervalId: null,
+            timeSaved: Date.now(),
+            isSaving: false,
             audioSettings: {
                 remainingTime: 120,
                 speedFactor: 1,
@@ -115,7 +117,7 @@ class MusicPlayerComponent extends Component {
                  ]
          console.log(this.state.items[this.state.currentIndex])
          console.log(this.state.items[this.state.currentIndex]?.src)   = src
-         console.log(this.state.items[this.state.currentIndex]?.intro)  = title
+         console.log(this.state.items[this.state.currentIndex]?.title)  = title
          console.log(this.myAudioRef.current.currentTime)  
          */
             },
@@ -125,18 +127,6 @@ class MusicPlayerComponent extends Component {
 
     }
 
-    initSettings = async () => {
-        // Load initial settings
-        this.loadUserSettings();
-
-        // Start periodic saving - using the interval from settings or default to 10 seconds
-        const saveIntervalId = setInterval(() => {
-            this.saveLastPosition();
-        }, (this.state.audioSettings.saveInterval || 10) * 1000);
-
-        // Store the interval ID in state
-        this.setState({ saveIntervalId });
-    }
 
 
     loadUserSettings = async () => {
@@ -150,11 +140,33 @@ class MusicPlayerComponent extends Component {
 
                 // Set playback speed if it exists
                 if ("speedFactor" in response.data.audio) {
-                    const speed = parseFloat(response.data.audio.speedFactor);
+                    const speed = response.data.audio.speedFactor;
                     this.setState({ selectedSpeed: speed });
                     if (this.myAudioRef.current) {
                         this.myAudioRef.current.playbackRate = speed;
                     }
+                }
+                if (this.state.items.length === 0 && response.data.audio.history?.length > 0) {
+                    console.log("SPECIAL items MODE")
+                    const items = []
+                    if ("last" in response.data.audio) {
+                        items.push({
+                            title: response.data.audio.last.title,
+                            src: response.data.audio.last.src,
+                        })
+                    }
+                    response.data.audio.history.forEach(element => {
+                        items.push({
+                            title: element.title,
+                            src: element.src,
+                        })
+                    });
+
+                    this.setState({
+                        items: items,
+                    }, () => {
+                        console.log('Items updated:', this.state.items);
+                    })
                 }
 
                 // Only proceed if we have an audio reference and current item
@@ -174,8 +186,8 @@ class MusicPlayerComponent extends Component {
                             timestamp = historyItem.timestamp;
 
                             // Since we found it in history, we should update last and history
-                            await this.saveHistoryUpdate();
                         }
+                        await this.saveHistoryUpdate(historyItem);
                     }
 
                     // If we found a timestamp, set it
@@ -189,11 +201,22 @@ class MusicPlayerComponent extends Component {
         }
     };
 
-    saveHistoryUpdate = async () => {
+    saveHistoryUpdate = async (item = null) => {
         console.log("saveHistoryUpdate");
-        if (!this.state.items[this.state.currentIndex]) return;
+        if (!this.state.items[this.state.currentIndex]) {
+            console.log("WEIRD ERROR")
+            return;
+        }
 
-        const currentAudio = this.state.items[this.state.currentIndex];
+        console.log("ITS NOT NULL", item)
+
+        let currentAudio = null;
+        if (item) {
+            currentAudio = item
+        } else {
+            currentAudio = this.state.items[this.state.currentIndex];
+        }
+
         let updatedHistory = this.state.audioSettings.history;
 
         // Remove current audio from history if it exists
@@ -205,9 +228,11 @@ class MusicPlayerComponent extends Component {
                 .slice(0, this.state.audioSettings.keepHistory);
         }
 
+
         const updatedSettings = {
-            ...this.state.audioSettings,
-            history: updatedHistory
+            // ...this.state.audioSettings,
+            last: currentAudio,
+            history: updatedHistory,
         };
 
         try {
@@ -232,7 +257,7 @@ class MusicPlayerComponent extends Component {
         const isListened = remainingTime <= this.state.audioSettings.remainingTime;
 
         const newItem = {
-            title: currentAudio.intro,
+            title: currentAudio.title,
             status: isListened ? 'ended' : 'started',
             src: currentAudio.src,
             // speed: this.state.selectedSpeed,
@@ -243,7 +268,7 @@ class MusicPlayerComponent extends Component {
         const updatedSettings = {
             ...this.state.audioSettings,
             last: newItem,
-            speedFactor: this.state.selectedSpeed
+            speedFactor: Math.round(this.state.selectedSpeed * 10) / 10
         };
 
         try {
@@ -268,7 +293,7 @@ class MusicPlayerComponent extends Component {
         if (nextProps.first.id !== "") {
             if (pathHelper.isSharePage(this.props.location.pathname) && !nextProps.first.path) {
                 const newItem = {
-                    intro: nextProps.first.name,
+                    title: nextProps.first.name,
                     src: baseURL + "/share/preview/" + nextProps.first.key,
                 };
                 firstOne = 0;
@@ -303,7 +328,7 @@ class MusicPlayerComponent extends Component {
                         src = baseURL + "/file/preview/" + value.id;
                     }
                     const newItem = {
-                        intro: value.name,
+                        title: value.name,
                         src: src,
                     };
                     if (
@@ -352,12 +377,27 @@ class MusicPlayerComponent extends Component {
         }
     }
 
-    componentDidUpdate(prevProps) {
+    componentDidUpdate(prevProps, prevState) {
+
+        if (prevState.currentIndex !== this.state.currentIndex) {
+            console.log("INDEX Update");
+            if (Auth.Check()) {
+                // Wait for audio to be ready before setting timestamp
+                if (this.myAudioRef.current) {
+                    this.myAudioRef.current.addEventListener('loadeddata', () => {
+                        this.loadUserSettings();
+                    }, { once: true }); // Use once: true to avoid multiple listeners
+                }
+            }
+        }
+
+
         // Check if dialog is being opened
         if (!prevProps.isOpen && this.props.isOpen) {
+            console.log("INIT Update")
             // Only initialize settings when the dialog is opened
             if (Auth.Check()) {
-                this.initSettings();
+                this.loadUserSettings();
             }
         }
 
@@ -369,12 +409,8 @@ class MusicPlayerComponent extends Component {
 
     componentWillUnmount() {
         this.unbindEvents(this.myAudioRef.current);
-
-        // Clear the save interval
-        if (this.state.saveIntervalId) {
-            clearInterval(this.state.saveIntervalId);
-        }
     }
+
 
     bindEvents = (ele) => {
         if (ele) {
@@ -409,47 +445,73 @@ class MusicPlayerComponent extends Component {
         );
     };
 
-    timeUpdate = () => {
-        const currentTime = Math.floor(this.myAudioRef.current.currentTime); //this.myAudioRef.current.currentTime;//
+    timeUpdate = async () => {
+        const currentTime = Math.floor(this.myAudioRef.current.currentTime);
+
+        // First update the UI-related state
         this.setState({
             currentTime: currentTime,
             duration: this.myAudioRef.current.duration,
-            progressText:
-                this.formatTime(currentTime) +
-                "/" +
-                this.formatTime(this.myAudioRef.current.duration),
+            progressText: this.formatTime(currentTime) + "/" + this.formatTime(this.myAudioRef.current.duration),
         });
+
+        // Then check if we need to save
+        const shouldSave = Date.now() - this.state.timeSaved > (this.state.audioSettings.saveInterval || 10) * 1000;
+
+        if (shouldSave && !this.state.isSaving) {
+
+            try {
+                console.log("Saving ...")
+                // Set saving state first
+                await new Promise(resolve => this.setState({ isSaving: true }, resolve));
+
+                // Do the save
+                await this.saveLastPosition();
+
+                // Update both flags after successful save
+                this.setState({
+                    isSaving: false,
+                    timeSaved: Date.now()
+                });
+            } catch (error) {
+                // Make sure to clear saving state even if save fails
+                this.setState({ isSaving: false });
+                console.error('Failed to save position:', error);
+            }
+        }
     };
 
     play = () => {
         this.myAudioRef.current.play();
-        /*this.setState({
+        this.setState({
             isPlay: true
-        });*/
+        });
         this.props.audioPreviewSetPlaying(
-            this.state.items[this.state.currentIndex].intro,
+            this.state.items[this.state.currentIndex]?.title,
             false
         );
         console.log(this.state.items[this.state.currentIndex])
         console.log(this.state.items[this.state.currentIndex]?.src)
-        console.log(this.state.items[this.state.currentIndex]?.intro)
+        console.log(this.state.items[this.state.currentIndex]?.title)
         console.log(this.myAudioRef.current.currentTime)
+        return true
     };
 
     pause = () => {
         if (this.myAudioRef.current) {
             this.myAudioRef.current.pause();
         }
-        /*this.setState({
+        this.setState({
             isPlay: false
-        })*/
+        })
         this.props.audioPreviewSetPlaying(
-            this.state.items[this.state.currentIndex]?.intro,
+            this.state.items[this.state.currentIndex]?.title,
             true
         );
+        return false
     };
 
-    playOrPaues = () => {
+    playOrPause = () => {
         if (this.state.isPlay) {
             this.pause();
         } else {
@@ -490,7 +552,10 @@ class MusicPlayerComponent extends Component {
             }
         }
         if (this.state.currentIndex == index) {
-            this.myAudioRef.current.currentTime = 0;
+            // this.myAudioRef.current.currentTime = 0;
+            /**
+             * This was removed because the progress shouldn't be lost!
+             */
             this.play();
         }
         this.setState({
@@ -539,7 +604,7 @@ class MusicPlayerComponent extends Component {
         });
 
         // Save the selected speed to localStorage
-        localStorage.setItem('selectedSpeed', newSpeed.toString());
+        // localStorage.setItem('selectedSpeed', newSpeed.toString());
 
         if (this.myAudioRef.current) {
             this.myAudioRef.current.playbackRate = newSpeed;
@@ -577,9 +642,10 @@ class MusicPlayerComponent extends Component {
                     {t("fileManager.musicPlayer")}
                 </DialogTitle>
                 <DialogContent>
-                    <List className={classes.list} dense>
+                    <List className={classes.list} dense
+                        key={items.length} >
                         {items.map((value, idx) => {
-                            const labelId = `label-${value.intro}`;
+                            const labelId = `label-${value.title}`;
                             return (
                                 <ListItem
                                     key={value.src}
@@ -597,14 +663,14 @@ class MusicPlayerComponent extends Component {
                                     </ListItemIcon>
                                     <ListItemText
                                         id={labelId}
-                                        primary={`${value.intro}`}
+                                        primary={`${value.title}`}
                                     />
                                 </ListItem>
                             );
                         })}
                     </List>
                     <MediaSession
-                        title={this.state.items[this.state.currentIndex]?.intro} // not supported in Firefox
+                        title={this.state.items[this.state.currentIndex]?.title} // not supported in Firefox
                         // artist={music.singers.join(',')}
                         album={this.state.items[this.state.currentIndex]?.src} // not supported in Firefox
 
@@ -666,24 +732,19 @@ class MusicPlayerComponent extends Component {
                                 <PlayPrev />
                             </IconButton>
                         </Grid>
+
+
                         <Grid item>
                             <IconButton
                                 edge="end"
                                 aria-label=""
-                                onClick={this.pause}
+                                onClick={this.playOrPause}
                             >
-                                <Pause />
+                                {this.state.isPlay ? <PlayArrow /> : <Pause />}
                             </IconButton>
                         </Grid>
-                        <Grid item>
-                            <IconButton
-                                edge="end"
-                                aria-label=""
-                                onClick={this.play}
-                            >
-                                <PlayArrow />
-                            </IconButton>
-                        </Grid>
+
+
                         <Grid item>
                             <IconButton
                                 edge="end"

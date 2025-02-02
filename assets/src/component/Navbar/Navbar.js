@@ -83,7 +83,7 @@ const drawerWidthMobile = 270;
 
 const ListItem = withStyles((theme) => ({
     root: {
-        borderRadius:theme.shape.borderRadius,
+        borderRadius: theme.shape.borderRadius,
     },
 }))(MuiListItem);
 
@@ -303,8 +303,8 @@ const styles = (theme) => ({
     minStickDrawer: {
         overflowY: "auto",
     },
-    paddingList:{
-        padding:theme.spacing(1),
+    paddingList: {
+        padding: theme.spacing(1),
     }
 });
 class NavbarCompoment extends Component {
@@ -409,6 +409,24 @@ class NavbarCompoment extends Component {
                         <div className={classes.minStickDrawer}>
                             <FileTag />
                             <List className={classes.paddingList}>
+
+                                <ListItem
+                                    button
+                                    key="openMusic"
+                                    onClick={() =>
+                                        this.props.audioPreviewOpen()
+                                    }
+                                >
+                                    <ListItemIcon>
+                                        <MusicNote
+                                            className={classes.iconFix}
+                                        />
+                                    </ListItemIcon>
+                                    <ListItemText
+                                        primary={t("navbar.music")}
+                                    />
+                                </ListItem>
+
                                 <ListItem
                                     button
                                     key="我的分享"
@@ -565,7 +583,7 @@ class NavbarCompoment extends Component {
                     className={classes.appBar}
                     color={
                         this.props.theme.palette.type !== "dark" &&
-                        this.props.selected.length === 0
+                            this.props.selected.length === 0
                             ? "primary"
                             : "default"
                     }
@@ -619,48 +637,24 @@ class NavbarCompoment extends Component {
                                 color="inherit"
                                 style={{
                                     cursor: "pointer",
-                                    userSelect: "none", 
+                                    userSelect: "none",
                                 }}
                                 noWrap
-                                onDoubleClick={()=>{this.props.history.push("/")}}
+                                // onDoubleClick={() => { this.props.history.push("/") }}
                                 onClick={() => {
                                     console.log(history)
-                                    // if (this.props.location.pathname === "/home" && this.props.location.search === "") {
-                                    //     console.log("already home!")
-                                    // }else{
-                                        this.props.history.goBack();
-                                    
-                                    // this.props.history.push(pathBack(this.props.history[0]))//goBack();        //push(".")    push("/");   Cloudr   go up one level
-                                    // const url = history.location.pathname
-                                    // const url = window.location.href
 
-                                    // window.location.pathname  /home
-                                    // window.location.search ?path=%2F
-                                    // window.location.
-                               /*   const url = window.location.pathname
-                                    const query = window.location.search
-
-                                  if (url.startsWith("/home")) {
-                                        console.log("The string starts with '/home'");
-                                        const lastIndex = query.lastIndexOf("%2F");
-                                        const queryMod = query.substring(0, lastIndex);
-                                        // this.props.history.push(url+queryMod);
-                                        // this.props.history.push("/shares?")
-                                        // history.push(url+query)
-                                        // this.props.history.push({
-                                        //     pathname: url,
-                                        //     search: queryMod,
-                                        //   });
-                                        // location.assign(url+queryMod)
-                                      } else {
-                                        console.log("The string does not start with '/home'");
-                                        this.props.history.goBack();
-                                      } */
+                                    // if (!pathHelper.isHomePage(this.props.location.pathname)) {
+                                    //     console.log("is NOT HP")
+                                    this.props.history.goBack();
+                                    // } else {
+                                    //     console.log("is HP")
+                                    // }
 
                                     console.log(history.location.pathname);
                                     console.log(history.location);
                                     console.log(pathBack(history.location.pathname));
-                                    
+
                                     // history.push(pathBack(history.location.pathname));
                                 }}
                             >
@@ -682,10 +676,10 @@ class NavbarCompoment extends Component {
                                                 this.props.location.pathname
                                             )) &&
                                         "(" +
-                                            sizeToString(
-                                                this.props.selected[0].size
-                                            ) +
-                                            ")"}
+                                        sizeToString(
+                                            this.props.selected[0].size
+                                        ) +
+                                        ")"}
                                 </Typography>
                             )}
 
@@ -791,29 +785,29 @@ class NavbarCompoment extends Component {
                                         )}
                                     {(this.props.isMultiple ||
                                         this.props.withFolder) && (
-                                        <Grow
-                                            in={
-                                                this.props.isMultiple ||
-                                                this.props.withFolder
-                                            }
-                                        >
-                                            <Tooltip
-                                                title={t(
-                                                    "fileManager.batchDownload"
-                                                )}
+                                            <Grow
+                                                in={
+                                                    this.props.isMultiple ||
+                                                    this.props.withFolder
+                                                }
                                             >
-                                                <IconButton
-                                                    color="inherit"
-                                                    disableClickAway
-                                                    onClick={() =>
-                                                        this.archiveDownload()
-                                                    }
+                                                <Tooltip
+                                                    title={t(
+                                                        "fileManager.batchDownload"
+                                                    )}
                                                 >
-                                                    <DownloadIcon />
-                                                </IconButton>
-                                            </Tooltip>
-                                        </Grow>
-                                    )}
+                                                    <IconButton
+                                                        color="inherit"
+                                                        disableClickAway
+                                                        onClick={() =>
+                                                            this.archiveDownload()
+                                                        }
+                                                    >
+                                                        <DownloadIcon />
+                                                    </IconButton>
+                                                </Tooltip>
+                                            </Grow>
+                                        )}
                                     {!this.props.isMultiple &&
                                         !pathHelper.isMobile() &&
                                         !isSharePage && (
