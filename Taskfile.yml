@@ -24,7 +24,11 @@ tasks:
       - task: yarn_install
       - task: go_mod_tidy
 
-  # Universal tasks
+  yarn_dev:
+    dir: assets
+    cmds:
+      - yarn dev
+
   yarn_build:
     dir: assets
     cmds:
@@ -82,7 +86,8 @@ tasks:
 
   finished:
     cmds:
-      - messagebox "Finished task!"
+      # - messagebox "Finished task!"
+      - echo "Finish"
 
   rclone:
     cmds:

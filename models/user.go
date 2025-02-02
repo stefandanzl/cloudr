@@ -74,6 +74,7 @@ type AudioSettings struct {
 	SpeedFactor   float64           `json:"speedFactor"`   // Playback speed multiplier
 	KeepHistory   int               `json:"keepHistory"`   // Number of entries to keep in history
 	SaveInterval  int               `json:"saveInterval"`  // How often to save in seconds
+	Last          PlaybackHistory   `json:"last"`
 	History       []PlaybackHistory `json:"history"`
 }
 
@@ -82,7 +83,6 @@ type PlaybackHistory struct {
 	Title     string  `json:"title"`     // Audio file name/title
 	Status    string  `json:"status"`    // 'started' or 'ended'
 	Src       string  `json:"src"`       // Source path/URL of the audio
-	Speed     float64 `json:"speed"`     // Playback speed used
 	Timestamp float64 `json:"timestamp"` // Last playback position in seconds
 	Total     float64 `json:"total"`     // Total duration of audio
 }

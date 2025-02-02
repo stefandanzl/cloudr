@@ -32,7 +32,7 @@ type AvatarService struct {
 
 // ################          settings change service           SettingUpdateService 设定更改服务
 type SettingUpdateService struct {
-	Option string `uri:"option" binding:"required,eq=nick|eq=theme|eq=homepage|eq=vip|eq=qq|eq=policy|eq=password|eq=2fa|eq=authn|eq=pdf"`
+	Option string `uri:"option" binding:"required,eq=nick|eq=theme|eq=homepage|eq=vip|eq=qq|eq=policy|eq=password|eq=2fa|eq=authn|eq=pdf|eq=audio"`
 }
 
 // Property change interface      ######################            OptionsChangeHandler 属性更改接口
@@ -94,7 +94,30 @@ type AudioSettingsService struct {
 }
 
 func (service *AudioSettingsService) Update(c *gin.Context, user *model.User) serializer.Response {
-	user.OptionsSerialized.AudioSettings = service.AudioSettings
+	// Get current settings
+	currentSettings := user.OptionsSerialized.AudioSettings
+
+	// Only update fields that are provided in the request
+	if service.AudioSettings.Last.Src != "" {
+		currentSettings.Last = service.AudioSettings.Last
+	}
+	if service.AudioSettings.SpeedFactor != 0 {
+		currentSettings.SpeedFactor = service.AudioSettings.SpeedFactor
+	}
+	if service.AudioSettings.RemainingTime != 0 {
+		currentSettings.RemainingTime = service.AudioSettings.RemainingTime
+	}
+	if service.AudioSettings.SaveInterval != 0 {
+		currentSettings.SaveInterval = service.AudioSettings.SaveInterval
+	}
+	if service.AudioSettings.KeepHistory != 0 {
+		currentSettings.KeepHistory = service.AudioSettings.KeepHistory
+	}
+	if service.AudioSettings.History != nil {
+		currentSettings.History = service.AudioSettings.History
+	}
+
+	user.OptionsSerialized.AudioSettings = currentSettings
 	if err := user.UpdateOptions(); err != nil {
 		return serializer.DBErr("Failed to update user preferences", err)
 	}
@@ -278,6 +301,7 @@ func (service *SettingService) Settings(c *gin.Context, user *model.User) serial
 			"themes":       model.GetSettingByName("themes"),
 			"authn":        serializer.BuildWebAuthnList(user.WebAuthnCredentials()),
 			"pdf":          user.OptionsSerialized.PdfSettings,
+			"audio":        user.OptionsSerialized.AudioSettings,
 		},
 	}
 }

@@ -36,6 +36,7 @@ import { withTranslation } from "react-i18next";
 import MediaSession from '@mebtte/react-media-session';
 import "./MusicPlayer.css"; // Import your CSS file for styling
 import API from "../../middleware/Api";
+import Auth from "../../middleware/Auth"
 
 
 
@@ -121,7 +122,7 @@ class MusicPlayerComponent extends Component {
         };
         this.myAudioRef = React.createRef();
 
-        this.initSettings();
+
     }
 
     initSettings = async () => {
@@ -130,82 +131,132 @@ class MusicPlayerComponent extends Component {
 
         // Start periodic saving - using the interval from settings or default to 10 seconds
         const saveIntervalId = setInterval(() => {
-            this.saveUserSettings();
+            this.saveLastPosition();
         }, (this.state.audioSettings.saveInterval || 10) * 1000);
 
         // Store the interval ID in state
         this.setState({ saveIntervalId });
     }
 
+
     loadUserSettings = async () => {
         console.log("loadUserSettings");
         try {
             const response = await API.get("/user/setting");
-            console.log(response)
+            console.log(response);
+
             if ("audio" in response.data) {
                 this.setState({ audioSettings: response.data.audio });
-                if ("speedfactor" in response.data.audio) {
-                    this.setState({ selectedSpeed: parseFloat(response.data.audio.speedFactor) });
-                    if (this.myAudioRef.current) {
-                        this.myAudioRef.current.playbackRate = parseFloat(response.data.audio.speedFactor);
-                        if (response.data.audio.history) {
-                            const playbackData = response.data.audio.history.filter((item) => { item.src === this.state.items[this.state.currentIndex]?.src });
-                            if (playbackData.length > 0) {
-                                const thisLastPlayed = playbackData[0]
-                                this.myAudioRef.current.currentTime = parseFloat(thisLastPlayed.timestamp);
 
-                            }
-                        }
+                // Set playback speed if it exists
+                if ("speedFactor" in response.data.audio) {
+                    const speed = parseFloat(response.data.audio.speedFactor);
+                    this.setState({ selectedSpeed: speed });
+                    if (this.myAudioRef.current) {
+                        this.myAudioRef.current.playbackRate = speed;
                     }
                 }
 
+                // Only proceed if we have an audio reference and current item
+                if (this.myAudioRef.current && this.state.items[this.state.currentIndex]) {
+                    const currentSrc = this.state.items[this.state.currentIndex].src;
+                    let timestamp = null;
 
+                    // First check last played
+                    if (response.data.audio.last?.src === currentSrc) {
+
+                        timestamp = response.data.audio.last.timestamp;
+                    }
+                    // If not in last, check history
+                    else if (response.data.audio.history?.length > 0) {
+                        const historyItem = response.data.audio.history.find(item => item.src === currentSrc);
+                        if (historyItem) {
+                            timestamp = historyItem.timestamp;
+
+                            // Since we found it in history, we should update last and history
+                            await this.saveHistoryUpdate();
+                        }
+                    }
+
+                    // If we found a timestamp, set it
+                    if (timestamp !== null) {
+                        this.myAudioRef.current.currentTime = timestamp;
+                    }
+                }
             }
         } catch (error) {
             console.error('Failed to load audio settings:', error);
         }
-    }
+    };
 
-    saveUserSettings = async () => {
-        console.log("saveUserSettings")
+    saveHistoryUpdate = async () => {
+        console.log("saveHistoryUpdate");
+        if (!this.state.items[this.state.currentIndex]) return;
+
+        const currentAudio = this.state.items[this.state.currentIndex];
+        let updatedHistory = this.state.audioSettings.history;
+
+        // Remove current audio from history if it exists
+        updatedHistory = updatedHistory.filter(item => item.src !== currentAudio.src);
+
+        // Add the previous 'last' to history if it exists and is different from current
+        if (this.state.audioSettings.last && this.state.audioSettings.last.src !== currentAudio.src) {
+            updatedHistory = [this.state.audioSettings.last, ...updatedHistory]
+                .slice(0, this.state.audioSettings.keepHistory);
+        }
+
+        const updatedSettings = {
+            ...this.state.audioSettings,
+            history: updatedHistory
+        };
+
+        try {
+            await API.patch("/user/setting/audio", {
+                audio: updatedSettings
+            });
+            this.setState({ audioSettings: updatedSettings });
+        } catch (error) {
+            console.error('Failed to save history update:', error);
+        }
+    };
+
+    saveLastPosition = async () => {
+        console.log("saveLastPosition");
         if (!this.myAudioRef.current || !this.state.items[this.state.currentIndex]) return;
 
         const currentAudio = this.state.items[this.state.currentIndex];
-        const currentPosition = this.myAudioRef.current.currentTime;
+        const currentPosition = Math.round(this.myAudioRef.current.currentTime * 10) / 10
         const totalDuration = this.myAudioRef.current.duration;
 
         const remainingTime = totalDuration - currentPosition;
         const isListened = remainingTime <= this.state.audioSettings.remainingTime;
 
-        const newLastItem = {
+        const newItem = {
             title: currentAudio.intro,
             status: isListened ? 'ended' : 'started',
             src: currentAudio.src,
-            id: currentAudio.id || '',
-            speed: this.state.selectedSpeed,
+            // speed: this.state.selectedSpeed,
             timestamp: currentPosition,
-            total: totalDuration,
+            total: totalDuration
         };
-
-        const updatedLast = [
-            newLastItem,
-            ...this.state.audioSettings.last.filter(item => item.path !== currentAudio.src)
-        ].slice(0, this.state.audioSettings.keepHistory);
 
         const updatedSettings = {
             ...this.state.audioSettings,
-            history: updatedLast
+            last: newItem,
+            speedFactor: this.state.selectedSpeed
         };
 
         try {
-            API.patch("/user/setting/audio", {
-                audio: updatedSettings,
-            })
+            await API.patch("/user/setting/audio", {
+                audio: updatedSettings
+            });
             this.setState({ audioSettings: updatedSettings });
         } catch (error) {
-            console.error('Failed to save audio settings:', error);
+            console.error('Failed to save last position:', error);
         }
-    }
+    };
+
+
 
     // async UNSAFE_componentWillMount() {
     //     await this.loadUserSettings();
@@ -299,15 +350,23 @@ class MusicPlayerComponent extends Component {
         if (this.myAudioRef.current) {
             this.bindEvents(this.myAudioRef.current);
         }
-
-        // doesnt actually run?
-
     }
-    componentDidUpdate() {
+
+    componentDidUpdate(prevProps) {
+        // Check if dialog is being opened
+        if (!prevProps.isOpen && this.props.isOpen) {
+            // Only initialize settings when the dialog is opened
+            if (Auth.Check()) {
+                this.initSettings();
+            }
+        }
+
         if (this.myAudioRef.current) {
             this.bindEvents(this.myAudioRef.current);
         }
     }
+
+
     componentWillUnmount() {
         this.unbindEvents(this.myAudioRef.current);
 
