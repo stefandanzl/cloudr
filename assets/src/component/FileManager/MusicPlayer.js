@@ -76,35 +76,123 @@ const mapDispatchToProps = (dispatch) => {
 class MusicPlayerComponent extends Component {
     constructor(props) {
         super(props);
-    
+
         // Try to retrieve the selected speed from localStorage, or set a default value
         const storedSpeed = localStorage.getItem('selectedSpeed');
         const initialSpeed = storedSpeed ? parseFloat(storedSpeed) : 1.0;
-    
-    
-    this.state = {
-        items: [],
-        currentIndex: 0,
-        //isOpen: false,
-        //isPlay:false,
-        currentTime: 0,
-        duration: 0,
-        progressText: "00:00/00:00",
-        looptype: 0,
-        selectedSpeed: initialSpeed,
-    };
-    this.myAudioRef = React.createRef();
-}
-    
+
+
+        this.state = {
+            items: [],
+            currentIndex: 0,
+            //isOpen: false,
+            //isPlay:false,
+            currentTime: 0,
+            duration: 0,
+            progressText: "00:00/00:00",
+            looptype: 0,
+            selectedSpeed: initialSpeed,
+            // New settings state
+            audioSettings: {
+                remainingTime: 120,
+                speedFactor: 1,
+                keepHistory: 20,
+                saveInterval: 10,
+                history: []
+                /** last: [
+                     {
+                         title: "",
+                         status: "done",
+                         path: "",
+                         src: "",
+                         id: "",   unverwendet
+                         timestamp: 0, !!!
+                     }
+                 ]
+         console.log(this.state.items[this.state.currentIndex])
+         console.log(this.state.items[this.state.currentIndex]?.src)   = src
+         console.log(this.state.items[this.state.currentIndex]?.intro)  = title
+         console.log(this.myAudioRef.current.currentTime)  
+         */
+            },
+        };
+        this.myAudioRef = React.createRef();
+    }
+
+
+
+    loadUserSettings = async () => {
+        try {
+            const response = await API.get("/user/setting");
+            if (response.data.audio) {
+                this.setState({ audioSettings: response.data.audio });
+                if (response.data.audio.speedFactor) {
+                    this.setState({ selectedSpeed: parseFloat(response.data.audio.speedFactor) });
+                    if (this.myAudioRef.current) {
+                        this.myAudioRef.current.playbackRate = parseFloat(response.data.audio.speedFactor);
+                        if (response.data.audio.last) {
+                            const playbackData = response.data.audio.last.filter((item) => { item.src === this.state.items[this.state.currentIndex]?.src });
+                            if (playbackData.length > 0) {
+                                const thisLastPlayed = playbackData[0]
+                                this.myAudioRef.current.currentTime = parseFloat(thisLastPlayed.timestamp);
+
+                            }
+                        }
+                    }
+                }
+
+
+            }
+        } catch (error) {
+            console.error('Failed to load audio settings:', error);
+        }
+    }
+
+    saveUserSettings = async () => {
+        if (!this.myAudioRef.current || !this.state.items[this.state.currentIndex]) return;
+
+        const currentAudio = this.state.items[this.state.currentIndex];
+        const currentPosition = this.myAudioRef.current.currentTime;
+        const totalDuration = this.myAudioRef.current.duration;
+
+        const remainingTime = totalDuration - currentPosition;
+        const isListened = remainingTime <= this.state.audioSettings.remainingTime;
+
+        const newLastItem = {
+            title: currentAudio.intro,
+            status: isListened ? 'ended' : 'started',
+            src: currentAudio.src,
+            id: currentAudio.id || '',
+            speed: this.state.selectedSpeed,
+            timestamp: currentPosition,
+            total: totalDuration,
+        };
+
+        const updatedLast = [
+            newLastItem,
+            ...this.state.audioSettings.last.filter(item => item.path !== currentAudio.src)
+        ].slice(0, this.state.audioSettings.keepHistory);
+
+        const updatedSettings = {
+            ...this.state.audioSettings,
+            last: updatedLast
+        };
+
+        try {
+            await API.post("/user/setting", {
+                audio: updatedSettings
+            });
+            this.setState({ audioSettings: updatedSettings });
+        } catch (error) {
+            console.error('Failed to save audio settings:', error);
+        }
+    }
 
     UNSAFE_componentWillReceiveProps = (nextProps) => {
         const items = [];
         let firstOne = 0;
         if (nextProps.first.id !== "") {
-            if (
-                pathHelper.isSharePage(this.props.location.pathname) &&
-                !nextProps.first.path
-            ) {
+            if (pathHelper.isSharePage(this.props.location.pathname) && !nextProps.first.path) {
                 const newItem = {
                     intro: nextProps.first.name,
                     src: baseURL + "/share/preview/" + nextProps.first.key,
@@ -354,34 +442,34 @@ class MusicPlayerComponent extends Component {
         this.myAudioRef.current.currentTime = this.myAudioRef.current.currentTime + 10;
     };
 
-      
-  handleSpeedChange = (newSpeed) => {
-    this.setState({
-      selectedSpeed: newSpeed,
-    });
 
-    // Save the selected speed to localStorage
-    localStorage.setItem('selectedSpeed', newSpeed.toString());
+    handleSpeedChange = (newSpeed) => {
+        this.setState({
+            selectedSpeed: newSpeed,
+        });
 
-    if (this.myAudioRef.current) {
-      this.myAudioRef.current.playbackRate = newSpeed;
-    }
-  };
+        // Save the selected speed to localStorage
+        localStorage.setItem('selectedSpeed', newSpeed.toString());
 
-  handleIncreaseSpeed = () => {
-    const newSpeed = this.state.selectedSpeed + 0.1;
-    this.handleSpeedChange(newSpeed);
-  };
+        if (this.myAudioRef.current) {
+            this.myAudioRef.current.playbackRate = newSpeed;
+        }
+    };
 
-  handleDecreaseSpeed = () => {
-    const newSpeed = this.state.selectedSpeed - 0.1;
-    this.handleSpeedChange(newSpeed >= 0.1 ? newSpeed : 0.1);
-  };
+    handleIncreaseSpeed = () => {
+        const newSpeed = this.state.selectedSpeed + 0.1;
+        this.handleSpeedChange(newSpeed);
+    };
 
-  handleInputChange = (event) => {
-    const newSpeed = parseFloat(event.target.value);
-    this.handleSpeedChange(isNaN(newSpeed) ? 1.0 : newSpeed);
-  };
+    handleDecreaseSpeed = () => {
+        const newSpeed = this.state.selectedSpeed - 0.1;
+        this.handleSpeedChange(newSpeed >= 0.1 ? newSpeed : 0.1);
+    };
+
+    handleInputChange = (event) => {
+        const newSpeed = parseFloat(event.target.value);
+        this.handleSpeedChange(isNaN(newSpeed) ? 1.0 : newSpeed);
+    };
 
     render() {
         const { currentIndex, items } = this.state;
@@ -426,22 +514,22 @@ class MusicPlayerComponent extends Component {
                         })}
                     </List>
                     <MediaSession
-                            title={this.state.items[this.state.currentIndex]?.intro} // not supported in Firefox
-                            // artist={music.singers.join(',')}
-                            album={this.state.items[this.state.currentIndex]?.src} // not supported in Firefox
-                            
-                            onPlay={this.play}
-                            onPause={this.pause}
-                            onSeekBackward={this.handleBackward}
-                            onSeekForward={this.handleForward}
-                            onPreviousTrack={this.prev}
-                            onNextTrack={this.next}
-                     >
-                    <audio
-                        ref={this.myAudioRef}
-                        src={items[currentIndex]?.src}
-                        playbackRate={this.state.selectedSpeed}
-                    />
+                        title={this.state.items[this.state.currentIndex]?.intro} // not supported in Firefox
+                        // artist={music.singers.join(',')}
+                        album={this.state.items[this.state.currentIndex]?.src} // not supported in Firefox
+
+                        onPlay={this.play}
+                        onPause={this.pause}
+                        onSeekBackward={this.handleBackward}
+                        onSeekForward={this.handleForward}
+                        onPreviousTrack={this.prev}
+                        onNextTrack={this.next}
+                    >
+                        <audio
+                            ref={this.myAudioRef}
+                            src={items[currentIndex]?.src}
+                            playbackRate={this.state.selectedSpeed}
+                        />
                     </MediaSession>
                     <div style={{ "padding-top": 8 }} />
                     <Grid container spacing={2} alignItems="center">
@@ -518,16 +606,16 @@ class MusicPlayerComponent extends Component {
                     </Grid>
                     <div className="playback-speed-selector">
                         <button className="round-button" onClick={this.handleDecreaseSpeed}>
-                        -
+                            -
                         </button>
                         <input
-                        type="text"
-                        value={this.state.selectedSpeed.toFixed(1)}
-                        onChange={this.handleInputChange}
-                        className="speed-input"
+                            type="text"
+                            value={this.state.selectedSpeed.toFixed(1)}
+                            onChange={this.handleInputChange}
+                            className="speed-input"
                         />
                         <button className="round-button" onClick={this.handleIncreaseSpeed}>
-                        +
+                            +
                         </button>
                     </div>
                 </DialogContent>

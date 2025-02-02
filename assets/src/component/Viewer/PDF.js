@@ -64,16 +64,16 @@ export default function PDFViewer() {
     const [status, setStatus] = useState("");
     const [loading, setLoading] = useState(true);
 
-  
+
     const [pdfInstance, setPdfInstance] = useState(null);
     const [contentState, setContentState] = useState("unchanged");
     const [pdfState, setPdfState] = useState(true);
     const [pdfSettings, setPdfSettings] = useState({ autoSave: true, autoSaveInterval: 10, changePrompt: true, saveButton: true, pagesId: "" })
-    
+
     const [pageNumber, setPageNumber] = useState(0);
-    const [pageDB, setPageDB ] = useState({})
+    const [pageDB, setPageDB] = useState({})
     const { title, path } = UseFileSubTitle(query, match, location);
-    const [fetchSettings, setFetchSettings ] = useState(true);
+    const [fetchSettings, setFetchSettings] = useState(true);
     const [pageInit, setPageInit] = useState(true);
 
     const dispatch = useDispatch();
@@ -109,101 +109,101 @@ export default function PDFViewer() {
              });
      // };
          },[]); */
-   /*      useEffect(() => {
-            if (!pathHelper.isSharePage(location.pathname)) {
-                const path = query.get("p").split("/");
-                setPath(query.get("p"));
-                SetSubTitle(path[path.length - 1]);
-                setTitle(path[path.length - 1]);
-            } else {
-                SetSubTitle(query.get("name"));
-                setTitle(query.get("name"));
-                setPath(query.get("share_path"));
-            }
-            // eslint-disable-next-line
-        }, [math.params[0], location]);
-*/
-         function getCurrentTime() {
-            const now = new Date();
-            const hours = now.getHours().toString().padStart(2, '0');
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            const seconds = now.getSeconds().toString().padStart(2, '0');
-    
-            return `${hours}:${minutes}:${seconds}`;
-        }
+    /*      useEffect(() => {
+             if (!pathHelper.isSharePage(location.pathname)) {
+                 const path = query.get("p").split("/");
+                 setPath(query.get("p"));
+                 SetSubTitle(path[path.length - 1]);
+                 setTitle(path[path.length - 1]);
+             } else {
+                 SetSubTitle(query.get("name"));
+                 setTitle(query.get("name"));
+                 setPath(query.get("share_path"));
+             }
+             // eslint-disable-next-line
+         }, [math.params[0], location]);
+ */
+    function getCurrentTime() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+
+        return `${hours}:${minutes}:${seconds}`;
+    }
 
 
-         // Last viewed Page Number gets stored in PDF file's Producer Field
-        //  const loadPdf = async (url) => {
-        //     try {
-        //         const pdfBytes = await fetch(url).then(res => res.arrayBuffer());
-        //         const pdfDoc = await PDFDocument.load(pdfBytes);
-        //         const producer = pdfDoc.getProducer();
-        //         if (typeof producer === 'string' && !isNaN(producer)) {
-        //             setPageNumber(parseInt(producer, 10));
-        //         }
-        //         return pdfBytes;
-        //     } catch (error) {
-        //         console.error('Error loading PDF:', error);
-        //         throw error; // Rethrow the error for further handling if needed
-        //     }
-        // };
+    // Last viewed Page Number gets stored in PDF file's Producer Field
+    //  const loadPdf = async (url) => {
+    //     try {
+    //         const pdfBytes = await fetch(url).then(res => res.arrayBuffer());
+    //         const pdfDoc = await PDFDocument.load(pdfBytes);
+    //         const producer = pdfDoc.getProducer();
+    //         if (typeof producer === 'string' && !isNaN(producer)) {
+    //             setPageNumber(parseInt(producer, 10));
+    //         }
+    //         return pdfBytes;
+    //     } catch (error) {
+    //         console.error('Error loading PDF:', error);
+    //         throw error; // Rethrow the error for further handling if needed
+    //     }
+    // };
 
     const savePageData = async () => {
         try {
             const objArray = pageDB
-            if (pageNumber > 1){
-                
-                objArray[0].i = pageNumber;
-                
-                setPageDB(objArray)   
+            if (pageNumber > 1) {
 
-                console.log("pagesId pageDB was updated",getCurrentTime())
+                objArray[0].i = pageNumber;
+
+                setPageDB(objArray)
+
+                console.log("pagesId pageDB was updated", getCurrentTime())
             }
 
-                // This code will run after the state has been updated
-                const content = JSON.stringify(objArray, null, 2)
-                await API.put("/file/update/" + pdfSettings.pagesId, content )
-               
-                    console.log("uploaded pageDB successfully",getCurrentTime())
-                    return true
-                
-                
-            } catch(error){ 
-                    console.log("ERRROR uploading pageDB", error.message,getCurrentTime())
-                    ToggleSnackbar("top", "right", "Saving PageData failed", "error");
-                    return false
-                }
-    }    
+            // This code will run after the state has been updated
+            const content = JSON.stringify(objArray, null, 2)
+            await API.put("/file/update/" + pdfSettings.pagesId, content)
+
+            console.log("uploaded pageDB successfully", getCurrentTime())
+            return true
+
+
+        } catch (error) {
+            console.log("ERRROR uploading pageDB", error.message, getCurrentTime())
+            ToggleSnackbar("top", "right", "Saving PageData failed", "error");
+            return false
+        }
+    }
 
     const save = async () => {
-        
-        console.log("SAVE FUNCTION START",getCurrentTime())
-        if (contentState === "saving"){return}
+
+        console.log("SAVE FUNCTION START", getCurrentTime())
+        if (contentState === "saving") { return }
         try {
             if (!pdfInstance) {
                 // Handle the case where pdfInstance is not available yet
-                console.log("PDF instance not available.",getCurrentTime());
+                console.log("PDF instance not available.", getCurrentTime());
                 return;
             }
-            
+
             let savePageDataSuccess = false;
-            if (pdfSettings.pagesId){
-                console.log("pagesId exists")       
-                
+            if (pdfSettings.pagesId) {
+                console.log("pagesId exists")
+
                 savePageDataSuccess = await savePageData()
-                
+
             }
 
-            if (contentState !== "modified"){ 
-                if(savePageDataSuccess){
+            if (contentState !== "modified") {
+                if (savePageDataSuccess) {
                     setStatus("success");
                     setTimeout(() => setStatus(""), 2000);
                     console.log("Not saving PDF because no changes have been made.")
-                } 
-                return   
+                }
+                return
             }
-                setContentState("saving")
+            setContentState("saving")
             console.log("exporting PDF", getCurrentTime())
             // const arrayBuffer = await pdfInstance.exportPDF();
             const arrayBuffer = await pdfInstance.exportPDF();   //let
@@ -220,159 +220,160 @@ export default function PDFViewer() {
                 .then(() => {
                     console.log("upload PDF fishish", getCurrentTime())
                     setContentState((prev) => { return "unchanged" });
-                    console.log("saved successfully!",getCurrentTime());
+                    console.log("saved successfully!", getCurrentTime());
                     setStatus("success");
                     setTimeout(() => setStatus(""), 2000);
                 })
                 .catch((error) => {
                     console.log("upload PDF fail", getCurrentTime())
                     setContentState((prev) => { return "modified" });
-                    console.log("saved failed!",getCurrentTime());
+                    console.log("saved failed!", getCurrentTime());
                     setStatus("");
                     ToggleSnackbar("top", "right", error.message, "error");
                 });
         } catch (error) {
-            console.error("Error exporting PDF:", error,getCurrentTime());
+            console.error("Error exporting PDF:", error, getCurrentTime());
         }
-        
+
     };
 
-    useEffect(()=>{
-        if ( pageInit && pdfInstance && pageDB){
+    useEffect(() => {
+        if (pageInit && pdfInstance && pageDB) {
             setPageInit(false)
-            if(pageNumber )
-            
-            pdfInstance.setViewState(v => v.set("currentPageIndex", pageNumber));
+            if (pageNumber)
+
+                pdfInstance.setViewState(v => v.set("currentPageIndex", pageNumber));
         }
-    
-    },[pageInit, pdfInstance, pageNumber, pageDB])
 
-    useEffect(()=>{
+    }, [pageInit, pdfInstance, pageNumber, pageDB])
 
-        if( fetchSettings ){
+    useEffect(() => {
+
+        if (fetchSettings) {
             setFetchSettings(false);
-            (async function () { 
-        API.get("/user/setting").then((response)=>{
-            
-            const pagesId = response.data.pdf.pagesId
+            (async function () {
+                API.get("/user/setting").then((response) => {
 
-            setPdfSettings({
-                autoSave: response.data.pdf.autoSave, 
-                autoSaveInterval: response.data.pdf.autosaveInterval, 
-                changePrompt: response.data.pdf.changePrompt, 
-                saveButton: response.data.pdf.saveButton, 
-                pagesId,
-            })
+                    const pagesId = response.data.pdf.pagesId
 
-            if(pagesId){
-
-                API.get("/file/content/" + pagesId, { responseType: "arraybuffer" })
-            .then((response) => {
-                const buffer = new Buffer(response.rawData, "binary");
-                const textdata = buffer.toString(); // for string
-                
-                console.log("TEXTDATA: ",textdata)
-                
-                let objArray;
-                try{
-                    objArray = JSON.parse(textdata)
-
-                    if (Array.isArray(objArray)) {
-                        // objArray is a valid array
-                        console.log("It's an array:", objArray);
-
-
-                        const arrayIndex = objArray.findIndex(obj => obj.id === query.get("id"))
-                        if (arrayIndex !== -1){
-                            const foundObject = objArray[arrayIndex];
-                            
-                            if (Number.isInteger(foundObject.i)){
-                                // index = foundObject.i
-                                setPageNumber(foundObject.i)
-                            } else {
-                                foundObject.i = 0;
-                            }
-                             
-                            foundObject.p = query.get("p")
-                            objArray.splice(arrayIndex, 1);
-                            objArray.unshift(foundObject)
-                            
-        
-                        } else {
-
-                            console.log("PDF Document not yet in pagesDB")
-
-                            const newObj = {
-                                id: query.get("id"),
-                                i: 0,
-                                p: query.get("p"),
-                            }
-                            objArray.unshift(newObj)
-                        }
-
-
-                    } else {
-                        // objArray is not an array
-                        console.log("It's not an array! Previous data stored as dumpDB");
-
-                        throw new Error("It's not an array! Previous data stored as dumpDB");
-                        // objArray = [
-                        //     { 
-                        //     id: query.get("id"),
-                        //     i: 0,
-                        //     p: query.get("p"),
-                        // }, 
-                        // {dumpDB: textdata}
-                    // ]
-                    }
-                } catch (error) {
-                    console.log("Invalid JSON in pages file!")
-                    console.log(error.message)
-
-                    objArray = [
-                        { 
-                        id: query.get("id"),
-                        i: 0,
-                        p: query.get("p"),
-                    }, 
-                    {dumpDB: textdata}
-                ]
-                }
-
-                console.log("ULTIMATE ARRAY: ",objArray)
-                setPageDB(objArray)
-
+                    setPdfSettings({
+                        autoSave: response.data.pdf.autoSave,
+                        autoSaveInterval: response.data.pdf.autosaveInterval,
+                        changePrompt: response.data.pdf.changePrompt,
+                        saveButton: response.data.pdf.saveButton,
+                        pagesId,
                     })
-            .catch((error) => {
-                console.log(error.message)   // r[G.get(...)] is undefined
-                ToggleSnackbar(
-                    "top",
-                    "right",
-                    t("fileManager.errorReadFileContent", {
-                        msg: error.message,
-                    }),
-                    "error"
-                );
-            })
-            .then(() => {
-                // setLoading(false);
-            });
-           
+
+                    if (pagesId) {
+
+                        API.get("/file/content/" + pagesId, { responseType: "arraybuffer" })
+                            .then((response) => {
+                                const buffer = new Buffer(response.rawData, "binary");
+                                const textdata = buffer.toString(); // for string
+
+                                console.log("TEXTDATA: ", textdata)
+
+                                let objArray;
+                                try {
+                                    objArray = JSON.parse(textdata)
+
+                                    if (Array.isArray(objArray)) {
+                                        // objArray is a valid array
+                                        console.log("It's an array:", objArray);
+
+
+                                        const arrayIndex = objArray.findIndex(obj => obj.id === query.get("id"))
+                                        if (arrayIndex !== -1) {
+                                            const foundObject = objArray[arrayIndex];
+
+                                            if (Number.isInteger(foundObject.i)) {
+                                                // index = foundObject.i
+                                                setPageNumber(foundObject.i)
+                                            } else {
+                                                foundObject.i = 0;
+                                            }
+
+                                            foundObject.p = query.get("p")
+                                            objArray.splice(arrayIndex, 1);
+                                            objArray.unshift(foundObject)
+
+
+                                        } else {
+
+                                            console.log("PDF Document not yet in pagesDB")
+
+                                            const newObj = {
+                                                id: query.get("id"),
+                                                i: 0,
+                                                p: query.get("p"),
+                                            }
+                                            objArray.unshift(newObj)
+                                        }
+
+
+                                    } else {
+                                        // objArray is not an array
+                                        console.log("It's not an array! Previous data stored as dumpDB");
+
+                                        throw new Error("It's not an array! Previous data stored as dumpDB");
+                                        // objArray = [
+                                        //     { 
+                                        //     id: query.get("id"),
+                                        //     i: 0,
+                                        //     p: query.get("p"),
+                                        // }, 
+                                        // {dumpDB: textdata}
+                                        // ]
+                                    }
+                                } catch (error) {
+                                    console.log("Invalid JSON in pages file!")
+                                    console.log(error.message)
+
+                                    objArray = [
+                                        {
+                                            id: query.get("id"),
+                                            i: 0,
+                                            p: query.get("p"),
+                                        },
+                                        { dumpDB: textdata }
+                                    ]
+                                }
+
+                                console.log("ULTIMATE ARRAY: ", objArray)
+                                setPageDB(objArray)
+
+                            })
+                            .catch((error) => {
+                                console.log(error.message)   // r[G.get(...)] is undefined
+                                ToggleSnackbar(
+                                    "top",
+                                    "right",
+                                    t("fileManager.errorReadFileContent", {
+                                        msg: error.message,
+                                    }),
+                                    "error"
+                                );
+                            })
+                            .then(() => {
+                                // setLoading(false);
+                            });
+
+                    }
+                }).catch((error) => {
+                    console.log(error.message)
+                    ToggleSnackbar(
+                        "top",
+                        "right",
+                        t("fileManager.errorReadFileContent", {
+                            msg: error.message,
+                        }),
+                        "error"
+                    );
+                })
+
+            })();
         }
-        }).catch((error) => {
-            console.log(error.message)
-                ToggleSnackbar(
-                    "top",
-                    "right",
-                    t("fileManager.errorReadFileContent", {
-                        msg: error.message,
-                    }),
-                    "error"
-                );
-            })
-        
-    })();}
-    },[pdfSettings, pageNumber, pageDB, title, path])
+    }, [pdfSettings, pageNumber, pageDB, title, path])
 
 
 
@@ -626,9 +627,9 @@ export default function PDFViewer() {
                             //     setContentState((prev) => { return "modified" });
                             //     console.log("updatedAnnotations ", updatedAnnotations );
                             // });
-                            instance.addEventListener("annotations.delete", deletedAnnotations  => {
+                            instance.addEventListener("annotations.delete", deletedAnnotations => {
                                 setContentState((prev) => { return "modified" });
-                                console.log("deletedAnnotations ", deletedAnnotations );
+                                console.log("deletedAnnotations ", deletedAnnotations);
                             });
 
 
@@ -669,13 +670,13 @@ export default function PDFViewer() {
 
             // https://www.wpeform.io/blog/exit-prompt-on-window-close-react-app/
             // if the form is NOT unchanged, then set the onbeforeunload
-           
+
             window.addEventListener("beforeunload", handler);
             // clean it up, if the dirty state changes
             return () => {
                 window.removeEventListener("beforeunload", handler);
             };
-            
+
         }
         // eslint-disable-line 
         //   return () => {};
@@ -692,7 +693,7 @@ export default function PDFViewer() {
     //   }
     // };
 
-   
+
     // Conditionally run the useEffect hook based on autoSaveEnabled
 
     useEffect(() => {
@@ -705,7 +706,7 @@ export default function PDFViewer() {
                 console.log("INTERVAL")
                 console.log(contentState)
                 // if (contentState !== "unchanged") {       disabled because handled by save() function
-                    save();
+                save();
                 // }
             }, 1000 * pdfSettings.autoSaveInterval); // 20 seconds = 20000
 
@@ -723,8 +724,8 @@ export default function PDFViewer() {
                 message='You have unsaved changes, are you sure you want to leave?'
             />
             {pdfSettings.saveButton && <SaveButton onClick={save} status={status} />}
-            <div 
-            style={{ margin: 0, top: 84, bottom: "auto", right: 20, left: "auto", zIndex: 1500, position: "fixed" }} >
+            <div
+                style={{ margin: 0, top: 84, bottom: "auto", right: 20, left: "auto", zIndex: 1500, position: "fixed" }} >
                 <h2>{pageNumber}</h2></div>
             <div
                 ref={containerRef}
