@@ -351,6 +351,8 @@ func UpdateOption(c *gin.Context) {
 			subService = &user.ThemeChose{}
 		case "pdf":
 			subService = &user.PdfSettingsService{}
+		case "audio":
+			subService = &user.AudioSettingsService{}
 		default:
 			subService = &user.ChangerNick{}
 		}

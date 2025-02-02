@@ -53,9 +53,10 @@ func init() {
 
 // User personalized configuration fields     UserOption 用户个性化配置字段
 type UserOption struct {
-	ProfileOff     bool        `json:"profile_off,omitempty"`
-	PreferredTheme string      `json:"preferred_theme,omitempty"`
-	PdfSettings    PdfSettings `json:"pdf,omitempty"`
+	ProfileOff     bool          `json:"profile_off,omitempty"`
+	PreferredTheme string        `json:"preferred_theme,omitempty"`
+	PdfSettings    PdfSettings   `json:"pdf,omitempty"`
+	AudioSettings  AudioSettings `json:"audio,omitempty"`
 }
 
 // PDF settings
@@ -65,6 +66,25 @@ type PdfSettings struct {
 	SaveButton       bool   `json:"saveButton"`
 	AutosaveInterval int    `json:"autosaveInterval"`
 	ChangePrompt     bool   `json:"changePrompt"`
+}
+
+// AudioSettings represents user audio playback preferences and history
+type AudioSettings struct {
+	RemainingTime int               `json:"remainingTime"` // Time threshold in seconds
+	SpeedFactor   float64           `json:"speedFactor"`   // Playback speed multiplier
+	KeepHistory   int               `json:"keepHistory"`   // Number of entries to keep in history
+	SaveInterval  int               `json:"saveInterval"`  // How often to save in seconds
+	History       []PlaybackHistory `json:"history"`
+}
+
+// PlaybackHistory represents a single audio playback session entry
+type PlaybackHistory struct {
+	Title     string  `json:"title"`     // Audio file name/title
+	Status    string  `json:"status"`    // 'started' or 'ended'
+	Src       string  `json:"src"`       // Source path/URL of the audio
+	Speed     float64 `json:"speed"`     // Playback speed used
+	Timestamp float64 `json:"timestamp"` // Last playback position in seconds
+	Total     float64 `json:"total"`     // Total duration of audio
 }
 
 // Get the user's root directory   Root 获取用户的根目录

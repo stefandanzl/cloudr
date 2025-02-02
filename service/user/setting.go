@@ -89,6 +89,19 @@ func (service *PdfSettingsService) Update(c *gin.Context, user *model.User) seri
 	return serializer.Response{}
 }
 
+type AudioSettingsService struct {
+	AudioSettings model.AudioSettings `json:"audio"`
+}
+
+func (service *AudioSettingsService) Update(c *gin.Context, user *model.User) serializer.Response {
+	user.OptionsSerialized.AudioSettings = service.AudioSettings
+	if err := user.UpdateOptions(); err != nil {
+		return serializer.DBErr("Failed to update user preferences", err)
+	}
+
+	return serializer.Response{}
+}
+
 // Update theme settings     Update 更新主题设定
 func (service *ThemeChose) Update(c *gin.Context, user *model.User) serializer.Response {
 	user.OptionsSerialized.PreferredTheme = service.Theme

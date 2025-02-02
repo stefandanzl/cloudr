@@ -35,6 +35,8 @@ import {
 import { withTranslation } from "react-i18next";
 import MediaSession from '@mebtte/react-media-session';
 import "./MusicPlayer.css"; // Import your CSS file for styling
+import API from "../../middleware/Api";
+
 
 
 const styles = (theme) => ({
@@ -93,6 +95,7 @@ class MusicPlayerComponent extends Component {
             looptype: 0,
             selectedSpeed: initialSpeed,
             // New settings state
+            saveIntervalId: null,
             audioSettings: {
                 remainingTime: 120,
                 speedFactor: 1,
@@ -117,21 +120,36 @@ class MusicPlayerComponent extends Component {
             },
         };
         this.myAudioRef = React.createRef();
+
+        this.initSettings();
     }
 
+    initSettings = async () => {
+        // Load initial settings
+        this.loadUserSettings();
 
+        // Start periodic saving - using the interval from settings or default to 10 seconds
+        const saveIntervalId = setInterval(() => {
+            this.saveUserSettings();
+        }, (this.state.audioSettings.saveInterval || 10) * 1000);
+
+        // Store the interval ID in state
+        this.setState({ saveIntervalId });
+    }
 
     loadUserSettings = async () => {
+        console.log("loadUserSettings");
         try {
             const response = await API.get("/user/setting");
-            if (response.data.audio) {
+            console.log(response)
+            if ("audio" in response.data) {
                 this.setState({ audioSettings: response.data.audio });
-                if (response.data.audio.speedFactor) {
+                if ("speedfactor" in response.data.audio) {
                     this.setState({ selectedSpeed: parseFloat(response.data.audio.speedFactor) });
                     if (this.myAudioRef.current) {
                         this.myAudioRef.current.playbackRate = parseFloat(response.data.audio.speedFactor);
-                        if (response.data.audio.last) {
-                            const playbackData = response.data.audio.last.filter((item) => { item.src === this.state.items[this.state.currentIndex]?.src });
+                        if (response.data.audio.history) {
+                            const playbackData = response.data.audio.history.filter((item) => { item.src === this.state.items[this.state.currentIndex]?.src });
                             if (playbackData.length > 0) {
                                 const thisLastPlayed = playbackData[0]
                                 this.myAudioRef.current.currentTime = parseFloat(thisLastPlayed.timestamp);
@@ -149,6 +167,7 @@ class MusicPlayerComponent extends Component {
     }
 
     saveUserSettings = async () => {
+        console.log("saveUserSettings")
         if (!this.myAudioRef.current || !this.state.items[this.state.currentIndex]) return;
 
         const currentAudio = this.state.items[this.state.currentIndex];
@@ -175,18 +194,22 @@ class MusicPlayerComponent extends Component {
 
         const updatedSettings = {
             ...this.state.audioSettings,
-            last: updatedLast
+            history: updatedLast
         };
 
         try {
-            await API.post("/user/setting", {
-                audio: updatedSettings
-            });
+            API.patch("/user/setting/audio", {
+                audio: updatedSettings,
+            })
             this.setState({ audioSettings: updatedSettings });
         } catch (error) {
             console.error('Failed to save audio settings:', error);
         }
     }
+
+    // async UNSAFE_componentWillMount() {
+    //     await this.loadUserSettings();
+    // }
 
     UNSAFE_componentWillReceiveProps = (nextProps) => {
         const items = [];
@@ -276,6 +299,9 @@ class MusicPlayerComponent extends Component {
         if (this.myAudioRef.current) {
             this.bindEvents(this.myAudioRef.current);
         }
+
+        // doesnt actually run?
+
     }
     componentDidUpdate() {
         if (this.myAudioRef.current) {
@@ -284,6 +310,11 @@ class MusicPlayerComponent extends Component {
     }
     componentWillUnmount() {
         this.unbindEvents(this.myAudioRef.current);
+
+        // Clear the save interval
+        if (this.state.saveIntervalId) {
+            clearInterval(this.state.saveIntervalId);
+        }
     }
 
     bindEvents = (ele) => {

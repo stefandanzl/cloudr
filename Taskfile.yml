@@ -6,7 +6,8 @@ version: '3'
 tasks:
   help:
     cmds:
-      - echo ""
+      - task --list-all
+    aliases: [h, -h]
 
   yarn_install:
     dir: assets
@@ -67,17 +68,17 @@ tasks:
       - docker push ghcr.io/stefandanzl/cloudr:latest
 
   push_docker_raspi:
-  cmds:
+    cmds:
     - docker push ghcr.io/stefandanzl/cloudr:raspi
 
   go_run:
     cmds:
       - go run .
 
-  firefox:
-    dir: "C:/Program Files/Mozilla Firefox"
+  browser:
     cmds:
-      - ./firefox.exe --private-window http://localhost:5212
+      - cmd: cmd.exe /c start http://localhost:5212
+        platforms: [windows]
 
   finished:
     cmds:
@@ -87,14 +88,8 @@ tasks:
     cmds:
       - "rclone mount devcloudr:/ R: --vfs-cache-mode full --volname Cloudr"
 
+    
 
-
-
-
-#######
-  h:
-    cmds:
-      - task --list-all
 
   run_wsl:
     cmds:
@@ -105,11 +100,11 @@ tasks:
   run:
     dir: dev
     cmds:
-      - task: firefox
       - cmd: ./cloudr.exe
         platforms: [windows]
       - cmd: ./cloudr
         platforms: [linux]
+
 
   build-run:
     cmds:
@@ -117,17 +112,17 @@ tasks:
         platforms: [windows]
       - cmd: task build_linux
         platforms: [linux]
-      - task: firefox
-      - task: run-build
+      - task: browser
+      - task: run
         
   # Local Development tasks
   dev:
     cmds:
       - task: yarn_build
       - task: zip
-      - task: firefox
-      - task: finished
-      - task: go_run
+      - task: browser
+      # - task: finished
+      - task: run
 
   fulll:
     cmds:
