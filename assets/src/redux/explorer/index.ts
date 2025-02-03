@@ -171,7 +171,7 @@ export const openRemoteDownloadDialog = () => {
 export const openTorrentDownloadDialog = (selected) => {
     return {
         type: "OPEN_TORRENT_DOWNLOAD_DIALOG",
-        selected:selected,
+        selected: selected,
     };
 };
 export const openDecompressDialog = () => {
@@ -263,6 +263,12 @@ export const audioPreviewSetPlaying = (playingName, paused) => {
         type: "AUDIO_PREVIEW_SET_PLAYING",
         playingName, //the playing content name
         paused,
+    };
+};
+export const triggerAudioLoad = (trigger) => {
+    return {
+        type: "TRIGGER_AUDIO",
+        trigger: trigger,
     };
 };
 export const refreshStorage = () => {

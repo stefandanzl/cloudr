@@ -33,6 +33,7 @@ export interface ExplorerState {
         playingName: any;
         paused: boolean;
         isOpen: boolean;
+        trigger: boolean;
     };
     search?: {
         keywords: string;
@@ -95,6 +96,7 @@ export const initState: ExplorerState = {
         playingName: null,
         paused: false,
         isOpen: false,
+        trigger: false,
     },
     fileSave: false,
     sideBarOpen: false,
@@ -208,6 +210,13 @@ const explorer = (
                 audioPreview: {
                     ...state.audioPreview,
                     isOpen: action.isOpen,
+                },
+            });
+        case "TRIGGER_AUDIO":
+            return Object.assign({}, state, {
+                audioPreview: {
+                    ...state.audioPreview,
+                    trigger: action.trigger,
                 },
             });
         case "AUDIO_PREVIEW_SET_PLAYING":

@@ -66,6 +66,7 @@ import {
     setSessionStatus,
     showImgPreivew,
     toggleSnackbar,
+    triggerAudioLoad,
 } from "../../redux/explorer";
 import {
     startBatchDownload,
@@ -158,6 +159,9 @@ const mapDispatchToProps = (dispatch) => {
         },
         audioPreviewOpen: () => {
             dispatch(audioPreviewSetIsOpen(true));
+        },
+        triggerAudioLoad: () => {
+            dispatch(triggerAudioLoad(true));
         },
         startBatchDownload: (share) => {
             dispatch(startBatchDownload(share));
@@ -413,8 +417,10 @@ class NavbarCompoment extends Component {
                                 <ListItem
                                     button
                                     key="openMusic"
-                                    onClick={() =>
-                                        this.props.audioPreviewOpen()
+                                    onClick={() => {
+                                        this.props.triggerAudioLoad();
+                                        this.props.audioPreviewOpen();
+                                    }
                                     }
                                 >
                                     <ListItemIcon>
