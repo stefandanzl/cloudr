@@ -18,6 +18,9 @@ import PlayArrow from "@material-ui/icons/PlayArrow";
 import PlayNext from "@material-ui/icons/SkipNext";
 import PlayPrev from "@material-ui/icons/SkipPrevious";
 import Pause from "@material-ui/icons/Pause";
+import Replay10Icon from '@mui/icons-material/Replay10';
+import Forward10Icon from '@mui/icons-material/Forward10';
+import LowPriorityIcon from '@mui/icons-material/LowPriority';
 import { Repeat, RepeatOne, Shuffle } from "@material-ui/icons";
 import PropTypes from "prop-types";
 import React, { Component } from "react";
@@ -133,6 +136,27 @@ class MusicPlayerComponent extends Component {
 
     }
 
+    /*
+    getItemsFromHistory = () => {
+        console.log("SPECIAL items MODE");
+        let items = [];
+        if ("last" in audioSettings) {
+            items.push({
+                title: audioSettings.last.title,
+                src: audioSettings.last.src,
+            });
+        }
+        audioSettings.history.forEach(element => {
+            items.push({
+                title: element.title,
+                src: element.src,
+            });
+        });
+ 
+ 
+        return items
+    }
+    */
 
     loadUserSettings = async () => {
         console.log("loadUserSettings");
@@ -147,17 +171,25 @@ class MusicPlayerComponent extends Component {
             return;
         }
 
-        if (!("audio" in response.data)) return;
-        const audioSettings = response.data.audio;
+        if (!("audio" in response.data)) {
+            console.error("No 'audio' in response data.")
+            return
+        }
+        if (!this.myAudioRef.current) {
+            console.error("No myAudioRef.current")
+            return
+        }
+
+        let audioSettings = response.data.audio;
 
 
-        console.log("Conditions check:", {
+        console.log("Conditions check:", JSON.stringify({
             hasAudioRef: !!this.myAudioRef.current,
             items: this.state.items?.length,
             hasCurrentItem: !!this.state.items[this.state.currentIndex],
             isInLast: audioSettings.last,
             hasHistory: !!audioSettings.history?.length
-        });
+        }, null, 2));
 
         // // Only update settings if they're valid
         // if (audioSettings.keepHistory !== 0 && audioSettings.saveInterval !== 0) {
@@ -174,83 +206,124 @@ class MusicPlayerComponent extends Component {
         }
 
         // Load history items if needed
-        if (this.state.items?.length === 0 && audioSettings.history?.length > 0) {
+
+        const index = audioSettings.history?.findIndex(item => item.src === audioSettings.last?.src);
+        if (index !== -1) {
+            audioSettings.history[index].timestamp = audioSettings.last.timestamp;
+        }
+
+        if (this.state.items?.length === 0) { //&& audioSettings.history?.length > 0) {
             console.log("SPECIAL items MODE");
             const items = [];
-            if ("last" in audioSettings) {
-                items.push({
-                    title: audioSettings.last.title,
-                    src: audioSettings.last.src,
-                });
-            }
-            audioSettings.history.forEach(element => {
+
+            audioSettings.history?.forEach(element => {
                 items.push({
                     title: element.title,
                     src: element.src,
                 });
             });
 
+
+
             await new Promise(resolve =>
-                this.setState({ items }, () => {
+                this.setState({
+                    items,
+                    currentIndex: 0,
+                }, () => {
                     console.log('Items updated:', this.state.items);
                     resolve();
                 })
             );
         }
 
+        console.error(0)
         // Handle current item timestamp and history
         if (this.myAudioRef.current && this.state.items[this.state.currentIndex]) {
+            console.error(1)
             const currentSrc = this.state.items[this.state.currentIndex].src;
-            let timestamp = null;
-            let historyItem = null;
 
             // Check last played first
             if (audioSettings.last?.src === currentSrc) {
-                timestamp = audioSettings.last.timestamp;
+                console.error(2)
+
+                this.myAudioRef.current.currentTime = audioSettings.last.timestamp;
+                this.setState({ audioSettings });
             }
             // Then check history
             else {
+                console.error(3)
+                let currentAudio = null
+                let updatedHistory = null
+                let timestamp = null;
+                let historyItem = null;
                 // else if (audioSettings.history?.length > 0) {
-                historyItem = audioSettings.history?.find(item => item.src === currentSrc);
-                if (historyItem) {
-                    timestamp = historyItem.timestamp;
-                }
 
-                // Update history if we have a current item
-                if (this.state.items[this.state.currentIndex]) {
-                    const currentAudio = historyItem || this.state.items[this.state.currentIndex];
-                    let updatedHistory = audioSettings.history.filter(item =>
+                // const index = audioSettings.history?.findIndex(item => item.src === audioSettings.last?.src);
+                // if (index !== -1) {
+                //     audioSettings.history[index].timestamp = audioSettings.last.timestamp;
+                // }
+
+                historyItem = audioSettings.history?.find(item => item.src === currentSrc);
+
+                if (historyItem) {
+                    // Current Audio is in history
+                    console.error(4)
+                    timestamp = historyItem.timestamp;
+                    currentAudio = historyItem
+
+                    updatedHistory = audioSettings.history.filter(item =>
                         item.src !== currentAudio.src
                     );
 
-                    if (audioSettings.last && audioSettings.last.src !== currentAudio.src) {
-                        updatedHistory = [audioSettings.last, ...updatedHistory]
-                            .slice(0, audioSettings.keepHistory);
+                } else {
+                    // Current Audio is not in history
+                    console.error(5)
+                    currentAudio = {
+                        title: this.state.items[this.state.currentIndex].title,
+                        src: this.state.items[this.state.currentIndex].src,
+                        timestamp: 1.0,
+                        status: "started",
+                        total: this.myAudioRef.current?.duration,
                     }
 
-
-                    const updatedSettings = {
-                        ...audioSettings,
-                        last: currentAudio,
-                        history: updatedHistory,
-                    };
-
-                    console.info("UPDATED SETTTTTTTTTTTTINGS")
-                    console.log(updatedSettings)
-
-                    try {
-                        await API.patch("/user/setting/audio", { audio: updatedSettings });
-                        this.setState({ audioSettings: updatedSettings });
-                    } catch (error) {
-                        console.error('Failed to save history update:', error);
-                    }
+                    updatedHistory = audioSettings.history;
                 }
+
+                updatedHistory = [currentAudio, ...updatedHistory]
+                    .slice(0, audioSettings.keepHistory);
+
+                // remove duplicate objects
+                const deduplicatedHistory = updatedHistory.filter((item, index) => {
+                    return updatedHistory.findIndex(obj => obj.src === item.src) === index;
+                });
+
+                // Set timestamp if found
+                if (timestamp !== null) {
+                    this.myAudioRef.current.currentTime = timestamp;
+                }
+
+                console.error(6)
+                const updatedSettings = {
+                    ...audioSettings,
+                    last: currentAudio,
+                    history: deduplicatedHistory,
+                };
+                this.setState({ audioSettings: updatedSettings });
+
+                console.info("UPDATED SETTTTTTTTTTTTINGS")
+                console.log(updatedSettings)
+
+                try {
+                    console.error(7)
+                    await API.patch("/user/setting/audio", { audio: updatedSettings });
+
+                } catch (error) {
+                    console.error('Failed to save history update:', error);
+                }
+
             }
 
-            // Set timestamp if found
-            if (timestamp !== null) {
-                this.myAudioRef.current.currentTime = timestamp;
-            }
+
         }
     };
 
@@ -355,6 +428,13 @@ class MusicPlayerComponent extends Component {
                     items.push(newItem);
                 }
             });
+
+            /*
+            if (items.length === 0) {
+                items = this.getItemsFromHistory()
+            }
+            */
+
             this.setState({
                 currentIndex: firstOne,
                 items: items,
@@ -758,6 +838,15 @@ class MusicPlayerComponent extends Component {
                             </IconButton>
                         </Grid>
 
+                        <Grid item>
+                            <IconButton
+                                edge="end"
+                                aria-label="Replay 10 Seconds"
+                                onClick={this.handleBackward}
+                            >
+                                <Replay10Icon />
+                            </IconButton>
+                        </Grid>
 
                         <Grid item>
                             <IconButton
@@ -769,6 +858,15 @@ class MusicPlayerComponent extends Component {
                             </IconButton>
                         </Grid>
 
+                        <Grid item>
+                            <IconButton
+                                edge="end"
+                                aria-label="Forward 10 seconds"
+                                onClick={this.handleForward}
+                            >
+                                <Forward10Icon />
+                            </IconButton>
+                        </Grid>
 
                         <Grid item>
                             <IconButton
@@ -779,6 +877,17 @@ class MusicPlayerComponent extends Component {
                                 <PlayNext />
                             </IconButton>
                         </Grid>
+
+                        {/* <Grid item> 
+                            <IconButton
+                                edge="end"
+                                aria-label=""
+                                onClick={this.loadUserSettings}
+                            >
+                                <LowPriorityIcon />
+                            </IconButton>
+                        </Grid> */}
+
                     </Grid>
                     <div className="playback-speed-selector">
                         <button className="round-button" onClick={this.handleDecreaseSpeed}>
