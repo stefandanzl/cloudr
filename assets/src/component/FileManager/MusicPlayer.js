@@ -136,27 +136,7 @@ class MusicPlayerComponent extends Component {
 
     }
 
-    /*
-    getItemsFromHistory = () => {
-        console.log("SPECIAL items MODE");
-        let items = [];
-        if ("last" in audioSettings) {
-            items.push({
-                title: audioSettings.last.title,
-                src: audioSettings.last.src,
-            });
-        }
-        audioSettings.history.forEach(element => {
-            items.push({
-                title: element.title,
-                src: element.src,
-            });
-        });
- 
- 
-        return items
-    }
-    */
+
 
     loadUserSettings = async () => {
         console.log("loadUserSettings");
@@ -212,6 +192,7 @@ class MusicPlayerComponent extends Component {
             audioSettings.history[index].timestamp = audioSettings.last.timestamp;
         }
 
+
         if (this.state.items?.length === 0) { //&& audioSettings.history?.length > 0) {
             console.log("SPECIAL items MODE");
             const items = [];
@@ -254,21 +235,13 @@ class MusicPlayerComponent extends Component {
                 console.error(3)
                 let currentAudio = null
                 let updatedHistory = null
-                let timestamp = null;
-                let historyItem = null;
-                // else if (audioSettings.history?.length > 0) {
 
-                // const index = audioSettings.history?.findIndex(item => item.src === audioSettings.last?.src);
-                // if (index !== -1) {
-                //     audioSettings.history[index].timestamp = audioSettings.last.timestamp;
-                // }
-
-                historyItem = audioSettings.history?.find(item => item.src === currentSrc);
+                const historyItem = audioSettings.history?.find(item => item.src === currentSrc);
 
                 if (historyItem) {
                     // Current Audio is in history
                     console.error(4)
-                    timestamp = historyItem.timestamp;
+                    this.myAudioRef.current.currentTime = historyItem.timestamp;
                     currentAudio = historyItem
 
                     updatedHistory = audioSettings.history.filter(item =>
@@ -281,26 +254,23 @@ class MusicPlayerComponent extends Component {
                     currentAudio = {
                         title: this.state.items[this.state.currentIndex].title,
                         src: this.state.items[this.state.currentIndex].src,
-                        timestamp: 1.0,
+                        timestamp: Math.round(this.myAudioRef.current.currentTime * 10) / 10,
                         status: "started",
                         total: this.myAudioRef.current?.duration,
                     }
-
                     updatedHistory = audioSettings.history;
                 }
 
                 updatedHistory = [currentAudio, ...updatedHistory]
                     .slice(0, audioSettings.keepHistory);
 
+                console.log("Original History:", updatedHistory);
+                console.log("Deduplicated History:", deduplicatedHistory);
+
                 // remove duplicate objects
                 const deduplicatedHistory = updatedHistory.filter((item, index) => {
                     return updatedHistory.findIndex(obj => obj.src === item.src) === index;
                 });
-
-                // Set timestamp if found
-                if (timestamp !== null) {
-                    this.myAudioRef.current.currentTime = timestamp;
-                }
 
                 console.error(6)
                 const updatedSettings = {
@@ -354,7 +324,7 @@ class MusicPlayerComponent extends Component {
         };
 
         const updatedSettings = {
-            ...this.state.audioSettings,
+            // ...this.state.audioSettings,
             last: newItem,
             speedFactor: Math.round(this.state.selectedSpeed * 10) / 10
         };
