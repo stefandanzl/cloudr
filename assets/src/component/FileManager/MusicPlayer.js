@@ -180,7 +180,7 @@ class MusicPlayerComponent extends Component {
             return
         }
 
-        let audioSettings = response.data.audio;
+        const audioSettings = response.data.audio;
 
 
         console.log("Conditions check:", JSON.stringify({
