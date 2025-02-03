@@ -264,13 +264,15 @@ class MusicPlayerComponent extends Component {
                 updatedHistory = [currentAudio, ...updatedHistory]
                     .slice(0, audioSettings.keepHistory);
 
-                console.log("Original History:", updatedHistory);
-                console.log("Deduplicated History:", deduplicatedHistory);
+
 
                 // remove duplicate objects
                 const deduplicatedHistory = updatedHistory.filter((item, index) => {
                     return updatedHistory.findIndex(obj => obj.src === item.src) === index;
                 });
+
+                console.log("Original History:", updatedHistory);
+                console.log("Deduplicated History:", deduplicatedHistory);
 
                 console.error(6)
                 const updatedSettings = {
