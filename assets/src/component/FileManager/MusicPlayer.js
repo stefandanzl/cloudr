@@ -21,6 +21,8 @@ import Pause from "@material-ui/icons/Pause";
 import Replay10Icon from '@mui/icons-material/Replay10';
 import Forward10Icon from '@mui/icons-material/Forward10';
 import LowPriorityIcon from '@mui/icons-material/LowPriority';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import { Repeat, RepeatOne, Shuffle } from "@material-ui/icons";
 import PropTypes from "prop-types";
 import React, { Component } from "react";
@@ -785,21 +787,7 @@ class MusicPlayerComponent extends Component {
                         justifyContent="center"
                         justify="center"
                     >
-                        <Grid item>
-                            <IconButton
-                                edge="end"
-                                aria-label=""
-                                onClick={this.changeLoopType}
-                            >
-                                {this.state.looptype === 0 ? (
-                                    <Repeat />
-                                ) : this.state.looptype === 1 ? (
-                                    <RepeatOne />
-                                ) : (
-                                    <Shuffle />
-                                )}
-                            </IconButton>
-                        </Grid>
+
                         <Grid item>
                             <IconButton
                                 edge="end"
@@ -861,20 +849,57 @@ class MusicPlayerComponent extends Component {
                         </Grid> */}
 
                     </Grid>
-                    <div className="playback-speed-selector">
-                        <button className="round-button" onClick={this.handleDecreaseSpeed}>
-                            -
-                        </button>
-                        <input
-                            type="text"
-                            value={this.state.selectedSpeed.toFixed(1)}
-                            onChange={this.handleInputChange}
-                            className="speed-input"
-                        />
-                        <button className="round-button" onClick={this.handleIncreaseSpeed}>
-                            +
-                        </button>
-                    </div>
+
+                    <Grid
+                        container
+                        spacing={2}
+                        justifyContent="center"
+                        justify="center"
+                    >
+                        <Grid item>
+                            <IconButton
+                                edge="end"
+                                aria-label=""
+                                onClick={this.changeLoopType}
+                            >
+                                {this.state.looptype === 0 ? (
+                                    <Repeat />
+                                ) : this.state.looptype === 1 ? (
+                                    <RepeatOne />
+                                ) : (
+                                    <Shuffle />
+                                )}
+                            </IconButton>
+                        </Grid>
+
+                        <Grid item>
+                            <IconButton
+                                edge="end"
+                                aria-label=""
+                                onClick={this.handleDecreaseSpeed}
+                            >
+                                <RemoveCircleIcon />
+                            </IconButton>
+                        </Grid>
+                        <Grid item>
+                            <input
+                                type="text"
+                                value={this.state.selectedSpeed.toFixed(1)}
+                                onChange={this.handleInputChange}
+                                className="speed-input"
+                            />
+                        </Grid>
+
+                        <Grid item>
+                            <IconButton
+                                edge="end"
+                                aria-label=""
+                                onClick={this.handleIncreaseSpeed}
+                            >
+                                <AddCircleIcon />
+                            </IconButton>
+                        </Grid>
+                    </Grid>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={this.handleClose}>
