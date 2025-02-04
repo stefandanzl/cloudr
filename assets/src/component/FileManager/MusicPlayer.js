@@ -452,34 +452,23 @@ class MusicPlayerComponent extends Component {
             this.bindEvents(this.myAudioRef.current);
         }
 
-
-        // // Check if dialog is being opened
-        // if (!prevProps.isOpen && this.props.isOpen) {
-        //     console.log("INIT Update")
-        //     // Only initialize settings when the dialog is opened
-        //     if (Auth.Check()) {
-        //         this.loadUserSettings();
-        //     }
-        //     return
-        // }
-        // 
-        // Check if dialog is being opened
-        if (!prevProps.trigger && this.props.trigger) {
-            console.log("TRIGGER Update")
-            // Only initialize settings when the dialog is opened
+        // Only load settings when opening AND currentTime is 0 AND it's the first track
+        if (!prevProps.isOpen && this.props.isOpen && this.state.currentTime === 0 && this.state.currentIndex === 0) {
+            console.log("Opening player with first track - loading settings");
             if (Auth.Check()) {
                 this.loadUserSettings();
             }
+        }
 
-        } else if (prevState.currentIndex !== this.state.currentIndex) {
+        else if (prevState.currentIndex !== this.state.currentIndex) {
             console.log("INDEX Update");
             if (Auth.Check()) {
-                // Wait for audio to be ready before setting timestamp
-                if (this.myAudioRef.current) {
-                    this.myAudioRef.current.addEventListener('loadeddata', () => {
-                        this.loadUserSettings();
-                    }, { once: true }); // Use once: true to avoid multiple listeners
-                }
+                // // Wait for audio to be ready before setting timestamp
+                // if (this.myAudioRef.current) {
+                //     this.myAudioRef.current.addEventListener('loadeddata', () => {
+                this.loadUserSettings();
+                // }, { once: true }); // Use once: true to avoid multiple listeners
+                // }
             }
         }
 
