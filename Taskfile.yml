@@ -41,7 +41,7 @@ tasks:
   zip:
     cmds:
       - rm -r assets.zip || echo "No assets.zip file"
-      - cp -r C:/PROJECTS/PROGRAMMIEREN/Javascript/PSPDFKIT/pspdfkit-2023.5.2 assets/build/pspdfkit-lib/
+      #- cp -r C:/PROJECTS/PROGRAMMIEREN/Javascript/PSPDFKIT/pspdfkit-2023.5.2 assets/build/pspdfkit-lib/
       - zip -r assets.zip assets/build
 
   build_windows:

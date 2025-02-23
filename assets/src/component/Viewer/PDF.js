@@ -117,19 +117,7 @@ export default function PDFViewer() {
 
     const savePageData = async () => {
         try {
-            // const objArray = pageDB
-            // if (pageNumber > 1) {
 
-            //     objArray[0].i = pageNumber;
-
-            //     setPageDB(objArray)
-
-            //     console.log("pagesId pageDB was updated", getCurrentTime())
-            // }
-
-            // // This code will run after the state has been updated
-            // const content = JSON.stringify(objArray, null, 2)
-            // await API.put("/file/update/" + pdfSettings.pagesId, content)
 
             const id = query.get("id")
 
@@ -168,13 +156,7 @@ export default function PDFViewer() {
                 return;
             }
 
-            let savePageDataSuccess = false;
-            if (pdfSettings.pagesId) {
-                console.log("pagesId exists")
-
-                savePageDataSuccess = await savePageData()
-
-            }
+            const savePageDataSuccess = await savePageData()
 
             if (contentState !== "modified") {
                 if (savePageDataSuccess) {
@@ -253,9 +235,9 @@ export default function PDFViewer() {
 
             const id = query.get("id")
 
-            const pageNumber = response.data.pdf.pageData[id]?.page
-            if (pageNumber) {
-                setPageNumber(pageNumber)
+            const pageNumber = response?.data?.pdf?.pageData[id]?.page;
+            if (typeof pageNumber === 'number' && !isNaN(pageNumber)) {
+                setPageNumber(pageNumber);
             }
 
         } catch (err) {
