@@ -133,16 +133,18 @@ export default function PDFViewer() {
 
             const id = query.get("id")
 
-            const content = {
+            //`{"pdf":{"pageData":{"${id}":{"page":${pageNumber}}}}}`
+            const content =
+            {
                 "pdf": {
                     "pageData": {
-                        id: {
+                        [id]: {
                             page: pageNumber
                         }
                     }
                 }
             }
-            await API.patch("/user/setting/pdf", {})
+            await API.patch("/user/setting/pdf", content)
 
             console.log("uploaded pageDB successfully", getCurrentTime())
             return true
