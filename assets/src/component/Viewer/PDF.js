@@ -115,19 +115,22 @@ export default function PDFViewer() {
     //     }
     // };
 
-    const savePageData = async () => {
+    const savePageData = async (pageIndex = -1) => {
         try {
 
 
             const id = query.get("id")
 
             //`{"pdf":{"pageData":{"${id}":{"page":${pageNumber}}}}}`
+            const page = pageIndex === -1 ? pageNumber : pageIndex
+
+
             const content =
             {
                 "pdf": {
                     "pageData": {
                         [id]: {
-                            page: pageNumber
+                            page: page
                         }
                     }
                 }
@@ -336,12 +339,17 @@ export default function PDFViewer() {
 
                     // https://www.nutrient.io/api/web/PSPDFKit.Instance.html#~ViewStateCurrentPageIndexChangeEvent
                     instance.addEventListener("viewState.currentPageIndex.change", (pageIndex) => {
-                        console.log(pageIndex);
-                        setPageNumber(pageIndex)
+                        try {
 
-                        if (Date.now() - lastPageSaved > 1000 * 10) {
-                            setLastPageSaved(Date.now())
-                            savePageData()
+                            console.log("pageIndex:", pageIndex);
+                            setPageNumber(Number(pageIndex))
+
+                            if (Date.now() - lastPageSaved > 1000 * 10) {
+                                setLastPageSaved(Date.now())
+                                savePageData(pageIndex)
+                            }
+                        } catch (err) {
+                            console.log("KKKK ", err)
                         }
                     });
 
