@@ -1,7 +1,6 @@
-version: '3'
+version: "3"
 
 # install task on windows with `choco install go-task`
-
 
 tasks:
   default:
@@ -12,6 +11,20 @@ tasks:
     cmds:
       - task --list-all
     aliases: [h, -h]
+
+  time:
+    cmds:
+      - task: start
+      - task: end
+
+  start:
+    silent: true
+    vars:
+      BUILD_START: "{{now}}"
+
+  end:
+    cmds:
+      - echo "Build took {{ago .BUILD_START}}"
 
   yarn_install:
     dir: assets
@@ -77,7 +90,7 @@ tasks:
 
   push_docker_raspi:
     cmds:
-    - docker push ghcr.io/stefandanzl/cloudr:raspi
+      - docker push ghcr.io/stefandanzl/cloudr:raspi
 
   go_run:
     cmds:
@@ -97,14 +110,10 @@ tasks:
     cmds:
       - "rclone mount devcloudr:/ R: --vfs-cache-mode full --volname Cloudr"
 
-    
-
-
   run_wsl:
     cmds:
       - "'C:/Program Files/Mozilla Firefox/firefox.exe' --private-window http://localhost:5214"
       - "wsl /mnt/host/c/PROJECTS/GITHUB/cloudr/dev/cloudr"
-
 
   run:
     dir: dev
@@ -114,7 +123,6 @@ tasks:
       - cmd: ./cloudr
         platforms: [linux]
 
-
   build-run:
     cmds:
       - cmd: task build_windows
@@ -123,7 +131,7 @@ tasks:
         platforms: [linux]
       - task: browser
       - task: run
-        
+
   # Local Development tasks
   dev:
     cmds:
@@ -143,18 +151,24 @@ tasks:
 
   full:
     cmds:
+      - task: start
       - cmd: task yarn_build || messagebox "React compilation Error!"
       - task: zip
-      - task: build_windows
+      - task: go_build
       - task: finished
+      - task: end
       - task: run
 
-  go:
+  go_build:
     cmds:
       - cmd: task build_windows
         platforms: [windows]
       - cmd: task build_linux
         platforms: [linux]
+
+  go:
+    cmds:
+      - task: go_build
       - task: run
 
   buildlinux:
@@ -179,7 +193,6 @@ tasks:
       - task: build_docker
       - task: push_docker
       - task: finished
-
 
   docker-raspi:
     cmds:
