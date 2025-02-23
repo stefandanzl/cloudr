@@ -52,6 +52,8 @@ function useQuery() {
 export default function PDFViewer() {
     const containerRef = useRef(null);
 
+    const pdfKitRef = useRef(null);
+
     //  idRef // = useRef(null);
 
     const { t } = useTranslation();
@@ -72,6 +74,7 @@ export default function PDFViewer() {
     const [pdfSettings, setPdfSettings] = useState({ pageData: {}, savePage: true, autoSave: true, autoSaveInterval: 10, changePrompt: true, saveButton: true })
 
     const [pageNumber, setPageNumber] = useState(0);
+    const [lastPageSaved, setLastPageSaved] = useState(Date.now())
     const [pageDB, setPageDB] = useState({})
     const { title, path } = UseFileSubTitle(query, match, location);
     const [isFetchSettings, setFetchSettings] = useState(true);
@@ -83,6 +86,7 @@ export default function PDFViewer() {
             dispatch(toggleSnackbar(vertical, horizontal, msg, color)),
         [dispatch]
     );
+
 
 
     function getCurrentTime() {
@@ -113,19 +117,32 @@ export default function PDFViewer() {
 
     const savePageData = async () => {
         try {
-            const objArray = pageDB
-            if (pageNumber > 1) {
+            // const objArray = pageDB
+            // if (pageNumber > 1) {
 
-                objArray[0].i = pageNumber;
+            //     objArray[0].i = pageNumber;
 
-                setPageDB(objArray)
+            //     setPageDB(objArray)
 
-                console.log("pagesId pageDB was updated", getCurrentTime())
+            //     console.log("pagesId pageDB was updated", getCurrentTime())
+            // }
+
+            // // This code will run after the state has been updated
+            // const content = JSON.stringify(objArray, null, 2)
+            // await API.put("/file/update/" + pdfSettings.pagesId, content)
+
+            const id = query.get("id")
+
+            const content = {
+                "pdf": {
+                    "pageData": {
+                        id: {
+                            page: pageNumber
+                        }
+                    }
+                }
             }
-
-            // This code will run after the state has been updated
-            const content = JSON.stringify(objArray, null, 2)
-            await API.put("/file/update/" + pdfSettings.pagesId, content)
+            await API.patch("/user/setting/pdf", {})
 
             console.log("uploaded pageDB successfully", getCurrentTime())
             return true
@@ -219,7 +236,7 @@ export default function PDFViewer() {
         }
 
         try {
-            if (!(pdf in response.data)) {
+            if (!("pdf" in response.data)) {
                 throw new Error("No pdf object in response")
             }
 
@@ -232,7 +249,9 @@ export default function PDFViewer() {
                 saveButton: response.data.pdf.saveButton,
             })
 
-            const pageNumber = response.data.pdf.pageData[query.get("id")].page
+            const id = query.get("id")
+
+            const pageNumber = response.data.pdf.pageData[id]?.page
             if (pageNumber) {
                 setPageNumber(pageNumber)
             }
@@ -255,11 +274,16 @@ export default function PDFViewer() {
 
 
 
-    async function loadPdfContainer() {
+    const loadPdfContainer = async () => {
+        let PSPDFKit = null;
+        const container = containerRef.current;
 
         const baseURL = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                      // WEB
         // const baseURL = `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`      // LOCAL                                                      
-        PSPDFKit = await import("pspdfkit");                                                                  // LOCAL
+        PSPDFKit = await import("pspdfkit");
+
+        pdfKitRef.current = PSPDFKit;
+        // LOCAL
         //PSPDFKit = await import(cdnBase+'pspdfkit.js'); 
         const annotationPresets = PSPDFKit.defaultAnnotationPresets;
         annotationPresets.highlighter.lineWidth = 12;
@@ -277,25 +301,19 @@ export default function PDFViewer() {
 
 
         toolbarItems.push(
-            TOOLBAR
+            ...TOOLBAR
         );
 
-        const document = getBaseURL() +
-            (pathHelper.isSharePage(location.pathname)
-                ? "/share/preview/" +
-                id +
-                (query.get("share_path") !== ""
-                    ? "?path=" +
-                    encodeURIComponent(query.get("share_path"))
-                    : "")
-                : "/file/preview/" + query.get("id"))
+        const document = getBaseURL() + (pathHelper.isSharePage(location.pathname) ? "/share/preview/" + id +
+            (query.get("share_path") !== "" ? "?path=" + encodeURIComponent(query.get("share_path")) : "")
+            : "/file/preview/" + query.get("id"));
 
 
 
         // const loadPdf = async () => {
         // (async function () {
         try {
-            PSPDFKit.unload(container);
+            PSPDFKit.unload(containerRef.current);
         } catch {
             console.log("no instance")
         }
@@ -303,7 +321,7 @@ export default function PDFViewer() {
 
         try {
             const instance = await PSPDFKit.load({
-                container,
+                container: containerRef.current,
                 document,
                 baseUrl: baseURL,
                 // baseUrl: cdnBase,
@@ -331,9 +349,16 @@ export default function PDFViewer() {
                         instance.setViewState(v => v.set("currentPageIndex", pageNumber));
                     }
 
-                    instance.addEventListener("viewState.currentPageIndex.change", page => {
-                        setPageNumber(page)
 
+                    // https://www.nutrient.io/api/web/PSPDFKit.Instance.html#~ViewStateCurrentPageIndexChangeEvent
+                    instance.addEventListener("viewState.currentPageIndex.change", (pageIndex) => {
+                        console.log(pageIndex);
+                        setPageNumber(pageIndex)
+
+                        if (Date.now() - lastPageSaved > 1000 * 10) {
+                            setLastPageSaved(Date.now())
+                            savePageData()
+                        }
                     });
 
                     // function createGoToAction(pageIndex) {
@@ -400,7 +425,7 @@ export default function PDFViewer() {
     //  Immediately invoked function expression (async function () {  })();
 
     useEffect(() => {
-        const container = containerRef.current;
+        // const container = containerRef.current;
         // let PSPDFKit;    // LOCAL and WEB
 
         // const cdnBase = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                  // WEB
@@ -410,22 +435,21 @@ export default function PDFViewer() {
 
         if (pdfState) {
             setPdfState(false);
-            let PSPDFKit;
 
             loadPdfContainer()
 
             // document.then(async (doc) => { pdfInstance.load({document: doc})})
 
             return () => {
-                PSPDFKit && PSPDFKit.unload(container);
+                pdfKitRef.current && pdfKitRef.current.unload(containerRef.current);
                 if (pdfInstance) {
                     pdfInstance.destroy();
                 }
             };
         }
 
-        // PSPDFKit && ;
-    }, [pdfState, contentState, pageNumber, pdfSettings]);
+
+    }, [pdfSettings]);
 
 
     useEffect(() => {

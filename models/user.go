@@ -71,7 +71,7 @@ type PdfSettings struct {
 
 type PDFPageInfo struct {
 	PageNumber int    `json:"page"`
-	Path       string `json:"path"`
+	Path       string `json:"path,omitempty"`
 }
 
 // AudioSettings represents user audio playback preferences and history
