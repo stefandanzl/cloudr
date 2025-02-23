@@ -61,11 +61,17 @@ type UserOption struct {
 
 // PDF settings
 type PdfSettings struct {
-	PagesID          string `json:"pagesId"`
-	Autosave         bool   `json:"autosave"`
-	SaveButton       bool   `json:"saveButton"`
-	AutosaveInterval int    `json:"autosaveInterval"`
-	ChangePrompt     bool   `json:"changePrompt"`
+	SavePage         bool                   `json:"savePage"` // Whether to save pages
+	PageData         map[string]PDFPageInfo `json:"pageData"` // map of page IDs to their info
+	Autosave         bool                   `json:"autosave"`
+	SaveButton       bool                   `json:"saveButton"`
+	AutosaveInterval int                    `json:"autosaveInterval"`
+	ChangePrompt     bool                   `json:"changePrompt"`
+}
+
+type PDFPageInfo struct {
+	PageNumber int    `json:"page"`
+	Path       string `json:"path"`
 }
 
 // AudioSettings represents user audio playback preferences and history

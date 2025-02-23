@@ -16,6 +16,7 @@ import API from "../../middleware/Api";
 import { Eraser } from "mdi-material-ui";
 // import { PDFDocument } from 'pdf-lib'
 import "./PDF.css"
+import { TOOLBAR } from "./PDFSettings"
 
 const useStyles = makeStyles((theme) => ({
     layout: {
@@ -68,7 +69,7 @@ export default function PDFViewer() {
     const [pdfInstance, setPdfInstance] = useState(null);
     const [contentState, setContentState] = useState("unchanged");
     const [pdfState, setPdfState] = useState(true);
-    const [pdfSettings, setPdfSettings] = useState({ autoSave: true, autoSaveInterval: 10, changePrompt: true, saveButton: true, pagesId: "" })
+    const [pdfSettings, setPdfSettings] = useState({ pageData: {}, autoSave: true, autoSaveInterval: 10, changePrompt: true, saveButton: true })
 
     const [pageNumber, setPageNumber] = useState(0);
     const [pageDB, setPageDB] = useState({})
@@ -83,46 +84,7 @@ export default function PDFViewer() {
         [dispatch]
     );
 
-    /* useEffect(()=>{
-     // const getSettings = () => {
-         if (this.state.settings.two_factor) {
-             this.setState({ twoFactor: true });
-             return;
-         }
-         API.get("/user/setting/pdf")
-             .then((response) => {
-                 setPdfSettings(response)
-                 // this.setState({
-                 //     two_fa_secret: response.data,
-                 //     twoFactor: true,
-                 // });
-             })
-             .catch((error) => {
-                console.log("Error getting setting 'pdf'")
-                ToggleSnackbar("top", "right", error.message, "error");
-                 // this.props.toggleSnackbar(
-                 //     "top",
-                 //     "right",
-                 //     error.message,
-                 //     "error"
-                 // );
-             });
-     // };
-         },[]); */
-    /*      useEffect(() => {
-             if (!pathHelper.isSharePage(location.pathname)) {
-                 const path = query.get("p").split("/");
-                 setPath(query.get("p"));
-                 SetSubTitle(path[path.length - 1]);
-                 setTitle(path[path.length - 1]);
-             } else {
-                 SetSubTitle(query.get("name"));
-                 setTitle(query.get("name"));
-                 setPath(query.get("share_path"));
-             }
-             // eslint-disable-next-line
-         }, [math.params[0], location]);
- */
+
     function getCurrentTime() {
         const now = new Date();
         const hours = now.getHours().toString().padStart(2, '0');
@@ -247,491 +209,383 @@ export default function PDFViewer() {
 
     }, [pageInit, pdfInstance, pageNumber, pageDB])
 
-    useEffect(() => {
 
-        if (fetchSettings) {
-            setFetchSettings(false);
-            (async function () {
-                API.get("/user/setting").then((response) => {
+    async function fetchSettings() {
+        const response = await API.get("/user/setting")
+        if (response.status !== 200) {
+            console.error("Error getting setting 'pdf'")
+            ToggleSnackbar("top", "right", "Loading PDF Settings failed", "error");
+            return
+        }
 
-                    const pagesId = response.data.pdf.pagesId
+        setPdfSettings({
 
-                    setPdfSettings({
-                        autoSave: response.data.pdf.autoSave,
-                        autoSaveInterval: response.data.pdf.autosaveInterval,
-                        changePrompt: response.data.pdf.changePrompt,
-                        saveButton: response.data.pdf.saveButton,
-                        pagesId,
-                    })
+            autoSave: response.data.pdf.autoSave,
+            autoSaveInterval: response.data.pdf.autosaveInterval,
+            changePrompt: response.data.pdf.changePrompt,
+            saveButton: response.data.pdf.saveButton,
+        })
 
-                    if (pagesId) {
+        if (pagesId) {
 
-                        API.get("/file/content/" + pagesId, { responseType: "arraybuffer" })
-                            .then((response) => {
-                                const buffer = new Buffer(response.rawData, "binary");
-                                const textdata = buffer.toString(); // for string
+            API.get("/file/content/" + pagesId, { responseType: "arraybuffer" })
+                .then((response) => {
+                    const buffer = new Buffer(response.rawData, "binary");
+                    const textdata = buffer.toString(); // for string
 
-                                console.log("TEXTDATA: ", textdata)
+                    console.log("TEXTDATA: ", textdata)
 
-                                let objArray;
-                                try {
-                                    objArray = JSON.parse(textdata)
+                    let objArray;
+                    try {
+                        objArray = JSON.parse(textdata)
 
-                                    if (Array.isArray(objArray)) {
-                                        // objArray is a valid array
-                                        console.log("It's an array:", objArray);
-
-
-                                        const arrayIndex = objArray.findIndex(obj => obj.id === query.get("id"))
-                                        if (arrayIndex !== -1) {
-                                            const foundObject = objArray[arrayIndex];
-
-                                            if (Number.isInteger(foundObject.i)) {
-                                                // index = foundObject.i
-                                                setPageNumber(foundObject.i)
-                                            } else {
-                                                foundObject.i = 0;
-                                            }
-
-                                            foundObject.p = query.get("p")
-                                            objArray.splice(arrayIndex, 1);
-                                            objArray.unshift(foundObject)
+                        if (Array.isArray(objArray)) {
+                            // objArray is a valid array
+                            console.log("It's an array:", objArray);
 
 
-                                        } else {
+                            const arrayIndex = objArray.findIndex(obj => obj.id === query.get("id"))
+                            if (arrayIndex !== -1) {
+                                const foundObject = objArray[arrayIndex];
 
-                                            console.log("PDF Document not yet in pagesDB")
-
-                                            const newObj = {
-                                                id: query.get("id"),
-                                                i: 0,
-                                                p: query.get("p"),
-                                            }
-                                            objArray.unshift(newObj)
-                                        }
-
-
-                                    } else {
-                                        // objArray is not an array
-                                        console.log("It's not an array! Previous data stored as dumpDB");
-
-                                        throw new Error("It's not an array! Previous data stored as dumpDB");
-                                        // objArray = [
-                                        //     { 
-                                        //     id: query.get("id"),
-                                        //     i: 0,
-                                        //     p: query.get("p"),
-                                        // }, 
-                                        // {dumpDB: textdata}
-                                        // ]
-                                    }
-                                } catch (error) {
-                                    console.log("Invalid JSON in pages file!")
-                                    console.log(error.message)
-
-                                    objArray = [
-                                        {
-                                            id: query.get("id"),
-                                            i: 0,
-                                            p: query.get("p"),
-                                        },
-                                        { dumpDB: textdata }
-                                    ]
+                                if (Number.isInteger(foundObject.i)) {
+                                    // index = foundObject.i
+                                    setPageNumber(foundObject.i)
+                                } else {
+                                    foundObject.i = 0;
                                 }
 
-                                console.log("ULTIMATE ARRAY: ", objArray)
-                                setPageDB(objArray)
-
-                            })
-                            .catch((error) => {
-                                console.log(error.message)   // r[G.get(...)] is undefined
-                                ToggleSnackbar(
-                                    "top",
-                                    "right",
-                                    t("fileManager.errorReadFileContent", {
-                                        msg: error.message,
-                                    }),
-                                    "error"
-                                );
-                            })
-                            .then(() => {
-                                // setLoading(false);
-                            });
-
-                    }
-                }).catch((error) => {
-                    console.log(error.message)
-                    ToggleSnackbar(
-                        "top",
-                        "right",
-                        t("fileManager.errorReadFileContent", {
-                            msg: error.message,
-                        }),
-                        "error"
-                    );
-                })
-
-            })();
-        }
-    }, [pdfSettings, pageNumber, pageDB, title, path])
+                                foundObject.p = query.get("p")
+                                objArray.splice(arrayIndex, 1);
+                                objArray.unshift(foundObject)
 
 
+                            } else {
 
-    //  Immediately invoked function expression (async function () {  })();
+                                console.log("PDF Document not yet in pagesDB")
 
-    useEffect(() => {
-        const container = containerRef.current;
-        // let PSPDFKit;    // LOCAL and WEB
-
-        // const cdnBase = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                  // WEB
-        // const baseURL = cdnBase                                                                             // WEB
-        // const scriptUrl = cdnBase + '/pspdfkit.js';                                                         // WEB
-        // loadScript(scriptUrl).then                                                                          // WEB
-
-        if (pdfState) {
-            setPdfState(false);
-            let PSPDFKit;
-
-            (async function () {
-                const baseURL = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                      // WEB
-                // const baseURL = `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`      // LOCAL                                                      
-                PSPDFKit = await import("pspdfkit");                                                                  // LOCAL
-                //PSPDFKit = await import(cdnBase+'pspdfkit.js'); 
-                const annotationPresets = PSPDFKit.defaultAnnotationPresets;
-                annotationPresets.highlighter.lineWidth = 12;
-                annotationPresets.ink.lineWidth = 1;
-
-                const allowedTypes = ["sidebar-thumbnails", "sidebar-document-outline", "sidebar-annotations", "sidebar-bookmarks"];
-
-                let toolbarItems = PSPDFKit.defaultToolbarItems;
-
-                toolbarItems = toolbarItems
-                    .filter(item => allowedTypes.includes(item.type))
-                    .map(item => ({ ...item })); // Create a new array with the filtered items
-
-                // Now toolbarItems is a new array with the desired items
-
-
-                toolbarItems.push(
-                    {
-                        type: "responsive-group",
-                        id: "m-hide",         // mobile hide
-                        mediaQueries: ["max-width: 600px"],
-                        // icon: "https://example.com/icon.png",
-                    }, {
-                    type: "document-editor",
-                    dropdownGroup: "doc",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "document-crop",
-                    dropdownGroup: "doc",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "export-pdf",
-                    dropdownGroup: "doc",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "print",
-                    dropdownGroup: "doc",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "zoom-out",
-                    dropdownGroup: "zoom",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "zoom-in",
-                    dropdownGroup: "zoom",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "zoom-mode",
-                    dropdownGroup: "zoom",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "search",
-                    dropdownGroup: "zoom",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "spacer",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "highlighter",
-                    title: "gelb",
-                    id: "gelb",
-                    dropdownGroup: "gelb",
-                }, {
-                    type: "ink",
-                    dropdownGroup: "pen",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "ink-eraser",
-                    dropdownGroup: "rubber",
-                }, {
-                    type: "text-highlighter",
-                    dropdownGroup: "hightext",
-                    selected: true,
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "callout",
-                    dropdownGroup: "add",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "note",
-                    dropdownGroup: "add",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "text",
-                    dropdownGroup: "add",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "link",
-                    dropdownGroup: "add",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "image",
-                    dropdownGroup: "add",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "stamp",
-                    dropdownGroup: "add",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "line",
-                    dropdownGroup: "line",
-                    responsiveGroup: "m-hide",
-                    //selected: true,
-                }, {
-                    type: "arrow",
-                    dropdownGroup: "line",
-                    responsiveGroup: "m-hide",
-                    //selected: true,
-                }, {
-                    type: "rectangle",
-                    dropdownGroup: "line",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "polygon",
-                    dropdownGroup: "line",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "multi-annotations-selection",
-                    dropdownGroup: "multi",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "spacer",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "highlighter",
-                    dropdownGroup: "h1",
-                    responsiveGroup: "m-hide",
-                }, {
-                    type: "pan",
-                    dropdownGroup: "pan2",
-                }
-
-                );
-
-                const document = getBaseURL() +
-                    (pathHelper.isSharePage(location.pathname)
-                        ? "/share/preview/" +
-                        id +
-                        (query.get("share_path") !== ""
-                            ? "?path=" +
-                            encodeURIComponent(query.get("share_path"))
-                            : "")
-                        : "/file/preview/" + query.get("id"))
-
-
-
-                // const loadPdf = async () => {
-                // (async function () {
-                try {
-                    PSPDFKit.unload(container);
-                } catch {
-                    console.log("no instance")
-                }
-
-
-                try {
-                    const instance = await PSPDFKit.load({
-                        container,
-                        document,
-                        baseUrl: baseURL,
-                        // baseUrl: cdnBase,
-                        annotationPresets,
-                        toolbarItems,
-                        theme: PSPDFKit.Theme.DARK,
-                        toolbarPlacement: PSPDFKit.ToolbarPlacement.BOTTOM,
-
-                        enableClipboardActions: true,
-                        enableHistory: true,
-                        // initialViewState: new PSPDFKit.ViewState({
-                        //     pageIndex: pageNumber,
-                        //     // sidebarMode: PSPDFKit.SidebarMode.THUMBNAILS
-                        //   })
-                    })
-                        .then(async (instance) => {
-                            // instancer = instance;
-                            // instanceRef = instance;
-                            // idRef = query.get("id");
-                            setPdfInstance(instance);
-                            console.log("INSTANCEEE:", pdfInstance)
-
-
-                            if (pageNumber) {
-                                instance.setViewState(v => v.set("currentPageIndex", pageNumber));
+                                const newObj = {
+                                    id: query.get("id"),
+                                    i: 0,
+                                    p: query.get("p"),
+                                }
+                                objArray.unshift(newObj)
                             }
 
-                            instance.addEventListener("viewState.currentPageIndex.change", page => {
-                                setPageNumber(page)
 
-                            });
+                        } else {
+                            // objArray is not an array
+                            console.log("It's not an array! Previous data stored as dumpDB");
 
-                            // function createGoToAction(pageIndex) {
-                            //     return new PSPDFKit.Actions.GoToAction({ pageIndex });
-                            //   }
+                            throw new Error("It's not an array! Previous data stored as dumpDB");
+                            // objArray = [
+                            //     { 
+                            //     id: query.get("id"),
+                            //     i: 0,
+                            //     p: query.get("p"),
+                            // }, 
+                            // {dumpDB: textdata}
+                            // ]
+                        }
+                    } catch (error) {
+                        console.log("Invalid JSON in pages file!")
+                        console.log(error.message)
 
-                            instance.addEventListener(
-                                "annotations.willChange",
-                                (event) => {
-                                    const annotation = event.annotations.get(0);
-                                    if (
-                                        event.reason ===
-                                        PSPDFKit.AnnotationsWillChangeReason
-                                            .DELETE_START
-                                    ) {
-                                        console.log(
-                                            "Will open deletion confirmation dialog"
-                                        );
-                                        // We need to wrap the logic in a setTimeOut() because modal will get actually rendered on the next tick
-                                        setTimeout(function () {
-                                            // The button is in the context of the PSPDFKit iframe
-                                            const button =
-                                                instance.contentDocument.getElementsByClassName(
-                                                    "PSPDFKit-Confirm-Dialog-Button-Confirm"
-                                                )[0];
-                                            button.click(); //.focus()
-                                        }, 0);
-                                    }
-                                }
-                            );
+                        objArray = [
+                            {
+                                id: query.get("id"),
+                                i: 0,
+                                p: query.get("p"),
+                            },
+                            { dumpDB: textdata }
+                        ]
+                    }
+
+                    console.log("ULTIMATE ARRAY: ", objArray)
+                    setPageDB(objArray)
+
+                })
+            // .catch((error) => {
+            //     console.log(error.message)   // r[G.get(...)] is undefined
+            //     ToggleSnackbar(
+            //         "top",
+            //         "right",
+            //         t("fileManager.errorReadFileContent", {
+            //             msg: error.message,
+            //         }),
+            //         "error"
+            //     );
+            // })
+            // .then(() => {
+            //     // setLoading(false);
+            // });
+
+        }
+    }).catch ((error) => {
+        console.log(error.message)
+        ToggleSnackbar(
+            "top",
+            "right",
+            t("fileManager.errorReadFileContent", {
+                msg: error.message,
+            }),
+            "error"
+        );
+    })
+
+}
+
+useEffect(() => {
+
+    if (fetchSettings) {
+        setFetchSettings(false);
+        fetchSettings();
+    }
+}, [pdfSettings, pageNumber, pageDB, title, path])
 
 
-                            // instance.addEventListener("annotations.change", () => {
-                            //     console.log("Something in the annotations has changed.");
-                            //   });
-                            instance.addEventListener("annotations.create", createdAnnotations => {
-                                setContentState((prev) => { return "modified" });
-                                console.log("createdAnnotations", createdAnnotations);
-                            });
-                            // instance.addEventListener("annotations.update", updatedAnnotations  => {
-                            //     setContentState((prev) => { return "modified" });
-                            //     console.log("updatedAnnotations ", updatedAnnotations );
-                            // });
-                            instance.addEventListener("annotations.delete", deletedAnnotations => {
-                                setContentState((prev) => { return "modified" });
-                                console.log("deletedAnnotations ", deletedAnnotations);
-                            });
+
+//  Immediately invoked function expression (async function () {  })();
+
+useEffect(() => {
+    const container = containerRef.current;
+    // let PSPDFKit;    // LOCAL and WEB
+
+    // const cdnBase = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                  // WEB
+    // const baseURL = cdnBase                                                                             // WEB
+    // const scriptUrl = cdnBase + '/pspdfkit.js';                                                         // WEB
+    // loadScript(scriptUrl).then                                                                          // WEB
+
+    if (pdfState) {
+        setPdfState(false);
+        let PSPDFKit;
+
+        (async function () {
+            const baseURL = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                      // WEB
+            // const baseURL = `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`      // LOCAL                                                      
+            PSPDFKit = await import("pspdfkit");                                                                  // LOCAL
+            //PSPDFKit = await import(cdnBase+'pspdfkit.js'); 
+            const annotationPresets = PSPDFKit.defaultAnnotationPresets;
+            annotationPresets.highlighter.lineWidth = 12;
+            annotationPresets.ink.lineWidth = 1;
+
+            const allowedTypes = ["sidebar-thumbnails", "sidebar-document-outline", "sidebar-annotations", "sidebar-bookmarks"];
+
+            let toolbarItems = PSPDFKit.defaultToolbarItems;
+
+            toolbarItems = toolbarItems
+                .filter(item => allowedTypes.includes(item.type))
+                .map(item => ({ ...item })); // Create a new array with the filtered items
+
+            // Now toolbarItems is a new array with the desired items
 
 
-                        }).catch((error) => {
-                            console.error('PSPDFKit loading error:', error);
+            toolbarItems.push(
+                TOOLBAR
+            );
+
+            const document = getBaseURL() +
+                (pathHelper.isSharePage(location.pathname)
+                    ? "/share/preview/" +
+                    id +
+                    (query.get("share_path") !== ""
+                        ? "?path=" +
+                        encodeURIComponent(query.get("share_path"))
+                        : "")
+                    : "/file/preview/" + query.get("id"))
+
+
+
+            // const loadPdf = async () => {
+            // (async function () {
+            try {
+                PSPDFKit.unload(container);
+            } catch {
+                console.log("no instance")
+            }
+
+
+            try {
+                const instance = await PSPDFKit.load({
+                    container,
+                    document,
+                    baseUrl: baseURL,
+                    // baseUrl: cdnBase,
+                    annotationPresets,
+                    toolbarItems,
+                    theme: PSPDFKit.Theme.DARK,
+                    toolbarPlacement: PSPDFKit.ToolbarPlacement.BOTTOM,
+
+                    enableClipboardActions: true,
+                    enableHistory: true,
+                    // initialViewState: new PSPDFKit.ViewState({
+                    //     pageIndex: pageNumber,
+                    //     // sidebarMode: PSPDFKit.SidebarMode.THUMBNAILS
+                    //   })
+                })
+                    .then(async (instance) => {
+                        // instancer = instance;
+                        // instanceRef = instance;
+                        // idRef = query.get("id");
+                        setPdfInstance(instance);
+                        console.log("INSTANCEEE:", pdfInstance)
+
+
+                        if (pageNumber) {
+                            instance.setViewState(v => v.set("currentPageIndex", pageNumber));
+                        }
+
+                        instance.addEventListener("viewState.currentPageIndex.change", page => {
+                            setPageNumber(page)
+
                         });
 
-                    console.log("STRINGGGif", JSON.stringify(pdfInstance));
-                } catch (error) {
-                    console.error("Error loading PSPDFKit:", error);
-                }
-                // })();
+                        // function createGoToAction(pageIndex) {
+                        //     return new PSPDFKit.Actions.GoToAction({ pageIndex });
+                        //   }
 
-                // const pdfFunc = loadPdf();
-            })();
-
-            // document.then(async (doc) => { pdfInstance.load({document: doc})})
-
-            return () => {
-                PSPDFKit && PSPDFKit.unload(container);
-                if (pdfInstance) {
-                    pdfInstance.destroy();
-                }
-            };
-        }
-
-        // PSPDFKit && ;
-    }, [pdfState, contentState, pageNumber, pdfSettings]);
-
-
-    useEffect(() => {
-
-        if (pdfSettings.changePrompt && contentState !== "unchanged") {
-            const handler = (event) => {
-                event.preventDefault();
-                event.returnValue = "";
-            };
-
-            // https://www.wpeform.io/blog/exit-prompt-on-window-close-react-app/
-            // if the form is NOT unchanged, then set the onbeforeunload
-
-            window.addEventListener("beforeunload", handler);
-            // clean it up, if the dirty state changes
-            return () => {
-                window.removeEventListener("beforeunload", handler);
-            };
-
-        }
-        // eslint-disable-line 
-        //   return () => {};
-    }, [pdfSettings, contentState])
+                        instance.addEventListener(
+                            "annotations.willChange",
+                            (event) => {
+                                const annotation = event.annotations.get(0);
+                                if (
+                                    event.reason ===
+                                    PSPDFKit.AnnotationsWillChangeReason
+                                        .DELETE_START
+                                ) {
+                                    console.log(
+                                        "Will open deletion confirmation dialog"
+                                    );
+                                    // We need to wrap the logic in a setTimeOut() because modal will get actually rendered on the next tick
+                                    setTimeout(function () {
+                                        // The button is in the context of the PSPDFKit iframe
+                                        const button =
+                                            instance.contentDocument.getElementsByClassName(
+                                                "PSPDFKit-Confirm-Dialog-Button-Confirm"
+                                            )[0];
+                                        button.click(); //.focus()
+                                    }, 0);
+                                }
+                            }
+                        );
 
 
-
-    // // Function to check and save changes if unsaved
-    // const checkAndSaveChanges = () => {
-    //   // Replace this condition with your logic to check for unsaved changes
-
-    //   if (contentState!=="unchanged") {
-    //     save();
-    //   }
-    // };
-
-
-    // Conditionally run the useEffect hook based on autoSaveEnabled
-
-    useEffect(() => {
-        if (pdfSettings.autoSave) {
-            const intervalId = setInterval(() => {
-                // Example usage
-                const currentTime = getCurrentTime();
-                // setContentState(contentState == "modified" ? "unchanged" : "modified")
-                console.log(currentTime); // Outputs something like "12:34"
-                console.log("INTERVAL")
-                console.log(contentState)
-                // if (contentState !== "unchanged") {       disabled because handled by save() function
-                save();
-                // }
-            }, 1000 * pdfSettings.autoSaveInterval); // 20 seconds = 20000
-
-            // Clean up interval when the component is unmounted
-            return () => clearInterval(intervalId);
-        }
-    }, [pdfSettings, contentState]);
+                        // instance.addEventListener("annotations.change", () => {
+                        //     console.log("Something in the annotations has changed.");
+                        //   });
+                        instance.addEventListener("annotations.create", createdAnnotations => {
+                            setContentState((prev) => { return "modified" });
+                            console.log("createdAnnotations", createdAnnotations);
+                        });
+                        // instance.addEventListener("annotations.update", updatedAnnotations  => {
+                        //     setContentState((prev) => { return "modified" });
+                        //     console.log("updatedAnnotations ", updatedAnnotations );
+                        // });
+                        instance.addEventListener("annotations.delete", deletedAnnotations => {
+                            setContentState((prev) => { return "modified" });
+                            console.log("deletedAnnotations ", deletedAnnotations);
+                        });
 
 
-    const classes = useStyles();
-    return (
-        <div className={classes.layout}>
-            <Prompt
-                when={pdfSettings.changePrompt && contentState !== "unchanged"}
-                message='You have unsaved changes, are you sure you want to leave?'
-            />
-            {pdfSettings.saveButton && <SaveButton onClick={save} status={status} />}
-            <div
-                style={{ margin: 0, top: 84, bottom: "auto", right: 20, left: "auto", zIndex: 1500, position: "fixed" }} >
-                <h2>{pageNumber}</h2></div>
-            <div
-                ref={containerRef}
-                style={{ width: "100%", height: "calc(100vh - 64px)" }}
-            />
-        </div>
-    );
+                    }).catch((error) => {
+                        console.error('PSPDFKit loading error:', error);
+                    });
+
+                console.log("STRINGGGif", JSON.stringify(pdfInstance));
+            } catch (error) {
+                console.error("Error loading PSPDFKit:", error);
+            }
+            // })();
+
+            // const pdfFunc = loadPdf();
+        })();
+
+        // document.then(async (doc) => { pdfInstance.load({document: doc})})
+
+        return () => {
+            PSPDFKit && PSPDFKit.unload(container);
+            if (pdfInstance) {
+                pdfInstance.destroy();
+            }
+        };
+    }
+
+    // PSPDFKit && ;
+}, [pdfState, contentState, pageNumber, pdfSettings]);
+
+
+useEffect(() => {
+
+    if (pdfSettings.changePrompt && contentState !== "unchanged") {
+        const handler = (event) => {
+            event.preventDefault();
+            event.returnValue = "";
+        };
+
+        // https://www.wpeform.io/blog/exit-prompt-on-window-close-react-app/
+        // if the form is NOT unchanged, then set the onbeforeunload
+
+        window.addEventListener("beforeunload", handler);
+        // clean it up, if the dirty state changes
+        return () => {
+            window.removeEventListener("beforeunload", handler);
+        };
+
+    }
+    // eslint-disable-line 
+    //   return () => {};
+}, [pdfSettings, contentState])
+
+
+
+// // Function to check and save changes if unsaved
+// const checkAndSaveChanges = () => {
+//   // Replace this condition with your logic to check for unsaved changes
+
+//   if (contentState!=="unchanged") {
+//     save();
+//   }
+// };
+
+
+// Conditionally run the useEffect hook based on autoSaveEnabled
+
+useEffect(() => {
+    if (pdfSettings.autoSave) {
+        const intervalId = setInterval(() => {
+            // Example usage
+            const currentTime = getCurrentTime();
+            // setContentState(contentState == "modified" ? "unchanged" : "modified")
+            console.log(currentTime); // Outputs something like "12:34"
+            console.log("INTERVAL")
+            console.log(contentState)
+            // if (contentState !== "unchanged") {       disabled because handled by save() function
+            save();
+            // }
+        }, 1000 * pdfSettings.autoSaveInterval); // 20 seconds = 20000
+
+        // Clean up interval when the component is unmounted
+        return () => clearInterval(intervalId);
+    }
+}, [pdfSettings, contentState]);
+
+
+const classes = useStyles();
+return (
+    <div className={classes.layout}>
+        <Prompt
+            when={pdfSettings.changePrompt && contentState !== "unchanged"}
+            message='You have unsaved changes, are you sure you want to leave?'
+        />
+        {pdfSettings.saveButton && <SaveButton onClick={save} status={status} />}
+        <div
+            style={{ margin: 0, top: 84, bottom: "auto", right: 20, left: "auto", zIndex: 1500, position: "fixed" }} >
+            <h2>{pageNumber}</h2></div>
+        <div
+            ref={containerRef}
+            style={{ width: "100%", height: "calc(100vh - 64px)" }}
+        />
+    </div>
+);
 }
 // id="btn"

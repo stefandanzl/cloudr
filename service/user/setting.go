@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/pquerna/otp/totp"
+
 	model "github.com/stefandanzl/cloudr/models"
 	"github.com/stefandanzl/cloudr/pkg/serializer"
 	"github.com/stefandanzl/cloudr/pkg/util"
@@ -81,7 +82,46 @@ type PdfSettingsService struct {
 }
 
 func (service *PdfSettingsService) Update(c *gin.Context, user *model.User) serializer.Response {
-	user.OptionsSerialized.PdfSettings = service.PdfSettings
+
+	// Get current settings
+	currentSettings := user.OptionsSerialized.PdfSettings
+
+	// Only update fields that are provided in the request
+	if service.PdfSettings.PageData != nil {
+		// If entire pages map is provided, update it
+
+		// Initialize map if it doesn't exist
+		if currentSettings.PageData == nil || len(service.PdfSettings.PageData) == 0 {
+			currentSettings.PageData = make(map[string]model.PDFPageInfo)
+		}
+
+		// Handle individual page updates if provided
+		for pageID, pageInfo := range service.PdfSettings.PageData {
+			if pageInfo.PageNumber != 0 || pageInfo.Path != "" {
+				currentSettings.PageData[pageID] = pageInfo
+			}
+		}
+	}
+
+	if service.PdfSettings.SavePage {
+		currentSettings.SavePage = service.PdfSettings.SavePage
+	}
+
+	// Update other fields only if they are provided
+	if service.PdfSettings.Autosave {
+		currentSettings.Autosave = service.PdfSettings.Autosave
+	}
+	if service.PdfSettings.SaveButton {
+		currentSettings.SaveButton = service.PdfSettings.SaveButton
+	}
+	if service.PdfSettings.AutosaveInterval != 0 {
+		currentSettings.AutosaveInterval = service.PdfSettings.AutosaveInterval
+	}
+	if service.PdfSettings.ChangePrompt {
+		currentSettings.ChangePrompt = service.PdfSettings.ChangePrompt
+	}
+
+	user.OptionsSerialized.PdfSettings = currentSettings
 	if err := user.UpdateOptions(); err != nil {
 		return serializer.DBErr("Failed to update user preferences", err)
 	}
