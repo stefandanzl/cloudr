@@ -63,3 +63,5 @@ assets/yarn-error.log*
 assets/dist/
 
 dist/
+
+.qodo
