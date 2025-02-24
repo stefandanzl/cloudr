@@ -268,195 +268,195 @@ export default function PDFViewer() {
         }
     };
 
-    const loadPdfContainer = async () => {
-        let PSPDFKit = null;
-        const container = containerRef.current;
 
-        const baseURL = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                      // WEB
-        // const baseURL = `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`      // LOCAL                                                      
-        PSPDFKit = await import("pspdfkit");
-
-        pdfKitRef.current = PSPDFKit;
-        // LOCAL
-        //PSPDFKit = await import(cdnBase+'pspdfkit.js'); 
-        const annotationPresets = PSPDFKit.defaultAnnotationPresets;
-        annotationPresets.highlighter.lineWidth = 12;
-        annotationPresets.ink.lineWidth = 1;
-
-        const allowedTypes = ["sidebar-thumbnails", "sidebar-document-outline", "sidebar-annotations", "sidebar-bookmarks"];
-
-        let toolbarItems = PSPDFKit.defaultToolbarItems;
-
-        toolbarItems = toolbarItems
-            .filter(item => allowedTypes.includes(item.type))
-            .map(item => ({ ...item })); // Create a new array with the filtered items
-
-        // Now toolbarItems is a new array with the desired items
-
-
-        toolbarItems.push(
-            ...TOOLBAR
-        );
-
-        const document = getBaseURL() + (pathHelper.isSharePage(location.pathname) ? "/share/preview/" + id +
-            (query.get("share_path") !== "" ? "?path=" + encodeURIComponent(query.get("share_path")) : "")
-            : "/file/preview/" + query.get("id"));
-
-
-
-        // const loadPdf = async () => {
-        // (async function () {
-        // try {
-        //     PSPDFKit.unload(containerRef.current);
-        // } catch {
-        //     console.log("no instance")
-        // }
-
-        if (pdfKitRef.current && containerRef.current) {
-            pdfKitRef.current.unload(containerRef.current);
-            setPdfInstance(null);
-        }
-
-
-        try {
-            const instance = await PSPDFKit.load({
-                container: containerRef.current,
-                document,
-                baseUrl: baseURL,
-                // baseUrl: cdnBase,
-                annotationPresets,
-                toolbarItems,
-                theme: PSPDFKit.Theme.DARK,
-                toolbarPlacement: PSPDFKit.ToolbarPlacement.BOTTOM,
-
-                enableClipboardActions: true,
-                enableHistory: true,
-                // initialViewState: new PSPDFKit.ViewState({
-                //     pageIndex: pageNumber,
-                //     // sidebarMode: PSPDFKit.SidebarMode.THUMBNAILS
-                //   })
-            })
-                .then(async (instance) => {
-                    // instancer = instance;
-                    // instanceRef = instance;
-                    // idRef = query.get("id");
-                    setPdfInstance(instance);
-                    // pdfInstance.current = instance;
-                    console.log("INSTANCEEE:", pdfInstance)
-
-
-                    if (pageNumber) {
-                        instance.setViewState(v => v.set("currentPageIndex", pageNumber));
-                    }
-
-                    /*
-                                        // https://www.nutrient.io/api/web/PSPDFKit.Instance.html#~ViewStateCurrentPageIndexChangeEvent
-                                        instance.addEventListener("viewState.currentPageIndex.change", (pageIndex) => {
-                                            try {
-                    
-                                                console.log("pageIndex:", pageIndex);
-                                                setPageNumber(Number(pageIndex))
-                    
-                                                if (Date.now() - lastPageSaved > 1000 * 10) {
-                                                    setLastPageSaved(Date.now())
-                                                    savePageData(pageIndex)
-                                                }
-                                            } catch (err) {
-                                                console.log("KKKK ", err)
-                                            }
-                                        });*/
-
-                    // function createGoToAction(pageIndex) {
-                    //     return new PSPDFKit.Actions.GoToAction({ pageIndex });
-                    //   }
-
-                    // https://www.nutrient.io/api/web/PSPDFKit.Instance.html#contentDocument
-                    instance.contentDocument.addEventListener("keydown", handleKeyDown);
-
-                    instance.addEventListener(
-                        "annotations.willChange",
-                        (event) => {
-                            const annotation = event.annotations.get(0);
-                            if (
-                                event.reason ===
-                                PSPDFKit.AnnotationsWillChangeReason
-                                    .DELETE_START
-                            ) {
-                                console.log(
-                                    "Will open deletion confirmation dialog"
-                                );
-                                // We need to wrap the logic in a setTimeOut() because modal will get actually rendered on the next tick
-                                setTimeout(function () {
-                                    // The button is in the context of the PSPDFKit iframe
-                                    const button =
-                                        instance.contentDocument.getElementsByClassName(
-                                            "PSPDFKit-Confirm-Dialog-Button-Confirm"
-                                        )[0];
-                                    button.click(); //.focus()
-                                }, 0);
-                            }
-                        }
-                    );
-
-
-                    // instance.addEventListener("annotations.change", () => {
-                    //     console.log("Something in the annotations has changed.");
-                    //   });
-                    instance.addEventListener("annotations.create", createdAnnotations => {
-                        setContentState((prev) => { return "modified" });
-                        console.log("createdAnnotations", createdAnnotations);
-                    });
-                    // instance.addEventListener("annotations.update", updatedAnnotations  => {
-                    //     setContentState((prev) => { return "modified" });
-                    //     console.log("updatedAnnotations ", updatedAnnotations );
-                    // });
-                    instance.addEventListener("annotations.delete", deletedAnnotations => {
-                        setContentState((prev) => { return "modified" });
-                        console.log("deletedAnnotations ", deletedAnnotations);
-                    });
-
-
-                }).catch((error) => {
-                    console.error('PSPDFKit loading error:', error);
-                });
-
-        } catch (error) {
-            console.error("Error loading PSPDFKit:", error);
-        }
-        // })();
-
-        // const pdfFunc = loadPdf();
-
-    }
 
     //  Immediately invoked function expression (async function () {  })();
 
     useEffect(() => {
-        // const container = containerRef.current;
-        // let PSPDFKit;    // LOCAL and WEB
+        const container = containerRef.current;
+        let PSPDFKit;    // LOCAL and WEB
 
         // const cdnBase = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                  // WEB
         // const baseURL = cdnBase                                                                             // WEB
         // const scriptUrl = cdnBase + '/pspdfkit.js';                                                         // WEB
         // loadScript(scriptUrl).then                                                                          // WEB
 
-        if (pdfState) {
-            setPdfState(false);
+        // if (pdfState) {
+        //     setPdfState(false);
 
-            loadPdfContainer()
+        (async function () {
+            // let PSPDFKit = null;
+            // const container = containerRef.current;
 
-            // document.then(async (doc) => { pdfInstance.load({document: doc})})
+            const baseURL = "https://cdn.danzl.it/pspdfkit/pspdfkit-2023.5.2/"                                      // WEB
+            // const baseURL = `${window.location.protocol}//${window.location.host}/${process.env.PUBLIC_URL}`      // LOCAL                                                      
+            PSPDFKit = await import("pspdfkit");
 
-            return () => {
-                pdfKitRef.current && pdfKitRef.current.unload(containerRef.current);
-                if (pdfInstance) {
-                    pdfInstance.destroy();
-                }
-            };
-        }
+            pdfKitRef.current = PSPDFKit;
+            // LOCAL
+            //PSPDFKit = await import(cdnBase+'pspdfkit.js'); 
+            const annotationPresets = PSPDFKit.defaultAnnotationPresets;
+            annotationPresets.highlighter.lineWidth = 12;
+            annotationPresets.ink.lineWidth = 1;
+
+            const allowedTypes = ["sidebar-thumbnails", "sidebar-document-outline", "sidebar-annotations", "sidebar-bookmarks"];
+
+            let toolbarItems = PSPDFKit.defaultToolbarItems;
+
+            toolbarItems = toolbarItems
+                .filter(item => allowedTypes.includes(item.type))
+                .map(item => ({ ...item })); // Create a new array with the filtered items
+
+            // Now toolbarItems is a new array with the desired items
 
 
-    }, [pdfSettings]);
+            toolbarItems.push(
+                ...TOOLBAR
+            );
+
+            const document = getBaseURL() + (pathHelper.isSharePage(location.pathname) ? "/share/preview/" + id +
+                (query.get("share_path") !== "" ? "?path=" + encodeURIComponent(query.get("share_path")) : "")
+                : "/file/preview/" + query.get("id"));
+
+
+
+            // const loadPdf = async () => {
+            // (async function () {
+            try {
+                PSPDFKit.unload(container);
+            } catch {
+                console.log("no instance")
+            }
+
+            // if (pdfKitRef.current && containerRef.current) {
+            //     pdfKitRef.current.unload(containerRef.current);
+            //     setPdfInstance(null);
+            // }
+
+
+            try {
+                const instance = await PSPDFKit.load({
+                    container,
+                    document,
+                    baseUrl: baseURL,
+                    // baseUrl: cdnBase,
+                    annotationPresets,
+                    toolbarItems,
+                    theme: PSPDFKit.Theme.DARK,
+                    toolbarPlacement: PSPDFKit.ToolbarPlacement.BOTTOM,
+
+                    enableClipboardActions: true,
+                    enableHistory: true,
+                    // initialViewState: new PSPDFKit.ViewState({
+                    //     pageIndex: pageNumber,
+                    //     // sidebarMode: PSPDFKit.SidebarMode.THUMBNAILS
+                    //   })
+                })
+                    .then(async (instance) => {
+                        // instancer = instance;
+                        // instanceRef = instance;
+                        // idRef = query.get("id");
+                        setPdfInstance(instance);
+                        // pdfInstance.current = instance;
+                        console.log("INSTANCEEE:", pdfInstance)
+
+
+                        if (pageNumber) {
+                            instance.setViewState(v => v.set("currentPageIndex", pageNumber));
+                        }
+
+                        /*
+                                            // https://www.nutrient.io/api/web/PSPDFKit.Instance.html#~ViewStateCurrentPageIndexChangeEvent
+                                            instance.addEventListener("viewState.currentPageIndex.change", (pageIndex) => {
+                                                try {
+                        
+                                                    console.log("pageIndex:", pageIndex);
+                                                    setPageNumber(Number(pageIndex))
+                        
+                                                    if (Date.now() - lastPageSaved > 1000 * 10) {
+                                                        setLastPageSaved(Date.now())
+                                                        savePageData(pageIndex)
+                                                    }
+                                                } catch (err) {
+                                                    console.log("KKKK ", err)
+                                                }
+                                            });*/
+
+                        // function createGoToAction(pageIndex) {
+                        //     return new PSPDFKit.Actions.GoToAction({ pageIndex });
+                        //   }
+
+                        // https://www.nutrient.io/api/web/PSPDFKit.Instance.html#contentDocument
+                        instance.contentDocument.addEventListener("keydown", handleKeyDown);
+
+                        instance.addEventListener(
+                            "annotations.willChange",
+                            (event) => {
+                                const annotation = event.annotations.get(0);
+                                if (
+                                    event.reason ===
+                                    PSPDFKit.AnnotationsWillChangeReason
+                                        .DELETE_START
+                                ) {
+                                    console.log(
+                                        "Will open deletion confirmation dialog"
+                                    );
+                                    // We need to wrap the logic in a setTimeOut() because modal will get actually rendered on the next tick
+                                    setTimeout(function () {
+                                        // The button is in the context of the PSPDFKit iframe
+                                        const button =
+                                            instance.contentDocument.getElementsByClassName(
+                                                "PSPDFKit-Confirm-Dialog-Button-Confirm"
+                                            )[0];
+                                        button.click(); //.focus()
+                                    }, 0);
+                                }
+                            }
+                        );
+
+
+                        // instance.addEventListener("annotations.change", () => {
+                        //     console.log("Something in the annotations has changed.");
+                        //   });
+                        instance.addEventListener("annotations.create", createdAnnotations => {
+                            setContentState((prev) => { return "modified" });
+                            console.log("createdAnnotations", createdAnnotations);
+                        });
+                        // instance.addEventListener("annotations.update", updatedAnnotations  => {
+                        //     setContentState((prev) => { return "modified" });
+                        //     console.log("updatedAnnotations ", updatedAnnotations );
+                        // });
+                        instance.addEventListener("annotations.delete", deletedAnnotations => {
+                            setContentState((prev) => { return "modified" });
+                            console.log("deletedAnnotations ", deletedAnnotations);
+                        });
+
+
+                    }).catch((error) => {
+                        console.error('PSPDFKit loading error:', error);
+                    });
+
+            } catch (error) {
+                console.error("Error loading PSPDFKit:", error);
+            }
+            // })();
+
+            // const pdfFunc = loadPdf();
+
+        })();
+
+        // document.then(async (doc) => { pdfInstance.load({document: doc})})
+
+        return () => {
+            PSPDFKit && PSPDFKit.unload(container);
+            if (pdfInstance) {
+                pdfInstance.destroy();
+            }
+        };
+
+
+
+    }, []);
 
 
     useEffect(() => {
