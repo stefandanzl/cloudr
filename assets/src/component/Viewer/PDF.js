@@ -63,21 +63,22 @@ export default function PDFViewer() {
     const { id } = useParams();
 
     const $vm = React.createRef();
-    const [content, setContent] = useState("");
     const [status, setStatus] = useState("");
     const [loading, setLoading] = useState(true);
 
 
     const [pdfInstance, setPdfInstance] = useState(null);
+    // const pdfInstance = useRef(null);
     const [contentState, setContentState] = useState("unchanged");
     const [pdfState, setPdfState] = useState(true);
     const [pdfSettings, setPdfSettings] = useState({ pageData: {}, savePage: true, autoSave: true, autoSaveInterval: 10, changePrompt: true, saveButton: true })
 
     const [pageNumber, setPageNumber] = useState(0);
-    const [lastPageSaved, setLastPageSaved] = useState(Date.now())
+    const [lastPageSaved, setLastPageSaved] = useState(0)    // or ()=>Date.now()
+    const timeoutRef = useRef(null);
+
     const [pageDB, setPageDB] = useState({})
     const { title, path } = UseFileSubTitle(query, match, location);
-    const [isFetchSettings, setFetchSettings] = useState(true);
     const [pageInit, setPageInit] = useState(true);
 
     const dispatch = useDispatch();
@@ -143,7 +144,7 @@ export default function PDFViewer() {
 
         } catch (error) {
             console.log("ERRROR uploading pageDB", error.message, getCurrentTime())
-            ToggleSnackbar("top", "right", "Saving PageData failed", "error");
+            // ToggleSnackbar("top", "right", "Saving PageData failed", "error");
             return false
         }
     }
@@ -211,7 +212,7 @@ export default function PDFViewer() {
                 pdfInstance.setViewState(v => v.set("currentPageIndex", pageNumber));
         }
 
-    }, [pageInit, pdfInstance, pageNumber, pageDB])
+    }, [pageInit, pdfInstance, pageDB])
 
 
     async function fetchSettings() {
@@ -259,7 +260,13 @@ export default function PDFViewer() {
     }, [])
 
 
-
+    const handleKeyDown = (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            e.preventDefault();
+            console.log('Ctrl+S pressed');
+            save();
+        }
+    };
 
     const loadPdfContainer = async () => {
         let PSPDFKit = null;
@@ -299,10 +306,15 @@ export default function PDFViewer() {
 
         // const loadPdf = async () => {
         // (async function () {
-        try {
-            PSPDFKit.unload(containerRef.current);
-        } catch {
-            console.log("no instance")
+        // try {
+        //     PSPDFKit.unload(containerRef.current);
+        // } catch {
+        //     console.log("no instance")
+        // }
+
+        if (pdfKitRef.current && containerRef.current) {
+            pdfKitRef.current.unload(containerRef.current);
+            setPdfInstance(null);
         }
 
 
@@ -329,6 +341,7 @@ export default function PDFViewer() {
                     // instanceRef = instance;
                     // idRef = query.get("id");
                     setPdfInstance(instance);
+                    // pdfInstance.current = instance;
                     console.log("INSTANCEEE:", pdfInstance)
 
 
@@ -336,26 +349,29 @@ export default function PDFViewer() {
                         instance.setViewState(v => v.set("currentPageIndex", pageNumber));
                     }
 
-
-                    // https://www.nutrient.io/api/web/PSPDFKit.Instance.html#~ViewStateCurrentPageIndexChangeEvent
-                    instance.addEventListener("viewState.currentPageIndex.change", (pageIndex) => {
-                        try {
-
-                            console.log("pageIndex:", pageIndex);
-                            setPageNumber(Number(pageIndex))
-
-                            if (Date.now() - lastPageSaved > 1000 * 10) {
-                                setLastPageSaved(Date.now())
-                                savePageData(pageIndex)
-                            }
-                        } catch (err) {
-                            console.log("KKKK ", err)
-                        }
-                    });
+                    /*
+                                        // https://www.nutrient.io/api/web/PSPDFKit.Instance.html#~ViewStateCurrentPageIndexChangeEvent
+                                        instance.addEventListener("viewState.currentPageIndex.change", (pageIndex) => {
+                                            try {
+                    
+                                                console.log("pageIndex:", pageIndex);
+                                                setPageNumber(Number(pageIndex))
+                    
+                                                if (Date.now() - lastPageSaved > 1000 * 10) {
+                                                    setLastPageSaved(Date.now())
+                                                    savePageData(pageIndex)
+                                                }
+                                            } catch (err) {
+                                                console.log("KKKK ", err)
+                                            }
+                                        });*/
 
                     // function createGoToAction(pageIndex) {
                     //     return new PSPDFKit.Actions.GoToAction({ pageIndex });
                     //   }
+
+                    // https://www.nutrient.io/api/web/PSPDFKit.Instance.html#contentDocument
+                    instance.contentDocument.addEventListener("keydown", handleKeyDown);
 
                     instance.addEventListener(
                         "annotations.willChange",
@@ -404,7 +420,6 @@ export default function PDFViewer() {
                     console.error('PSPDFKit loading error:', error);
                 });
 
-            console.log("STRINGGGif", JSON.stringify(pdfInstance));
         } catch (error) {
             console.error("Error loading PSPDFKit:", error);
         }
@@ -445,6 +460,46 @@ export default function PDFViewer() {
 
 
     useEffect(() => {
+        if (!pdfInstance) return;
+
+        const handlePageChange = (pageIndex) => {
+            try {
+                console.log("pageIndex:", pageIndex);
+                setPageNumber(Number(pageIndex));
+
+                // Clear existing timeout using ref
+                if (timeoutRef.current) {
+                    console.log("Clearing timeout:", timeoutRef.current);
+                    clearTimeout(timeoutRef.current);
+                }
+
+                // Set new timeout and store in ref
+                const timeoutId = setTimeout(() => {
+                    console.log("Saving after 10s on page", pageIndex);
+                    savePageData(pageIndex);
+                    timeoutRef.current = null;
+                }, 1000 * 10);
+
+                timeoutRef.current = timeoutId;
+                console.log("New timeout set:", timeoutId);
+
+            } catch (err) {
+                console.error("Error handling page change:", err);
+            }
+        };
+
+        pdfInstance.addEventListener("viewState.currentPageIndex.change", handlePageChange);
+
+        return () => {
+            pdfInstance.removeEventListener("viewState.currentPageIndex.change", handlePageChange);
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+
+    }, [pdfInstance]);
+
+    useEffect(() => {
 
         if (pdfSettings.changePrompt && contentState !== "unchanged") {
             const handler = (event) => {
@@ -466,6 +521,37 @@ export default function PDFViewer() {
         //   return () => {};
     }, [pdfSettings, contentState])
 
+
+    function useKey(key, cb) {
+        const callback = useRef(cb);
+
+        useEffect(() => {
+            callback.current = cb;
+        });
+
+        useEffect(() => {
+            function handle(event) {
+                if (key === 'ctrls' && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+                    event.preventDefault();
+                    callback.current(event);
+                    return;
+                }
+
+                if (event.code === key) {
+                    callback.current(event);
+                }
+            }
+
+            // Changed from document to window
+            window.addEventListener('keydown', handle);
+            return () => window.removeEventListener('keydown', handle);
+        }, [key]);
+    }
+
+    useKey('ctrls', (e) => {
+        console.log('Ctrl+S pressed');
+        save();
+    });
 
 
     // // Function to check and save changes if unsaved

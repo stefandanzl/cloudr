@@ -188,6 +188,7 @@ tasks:
       - task: finished
 
   docker:
+    desc: Build docker image and push to github
     cmds:
       - task: build_linux
       - task: build_docker
