@@ -21,7 +21,7 @@ import (
 	"sync"
 	"time"
 
-	"crypto/sha1"
+	"crypto/sha256"
 
 	model "github.com/stefandanzl/cloudr/models"
 	"github.com/stefandanzl/cloudr/pkg/filesystem"
@@ -803,7 +803,7 @@ func (h *Handler) handlePropfind(w http.ResponseWriter, r *http.Request, fs *fil
 			// fmt.Println("> ", n)
 			// fmt.Println(buffer)
 
-			hash := sha1.New()
+			hash := sha256.New()
 			hash.Write(buffer)
 			checksum := hex.EncodeToString(hash.Sum(nil))
 			fmt.Println(checksum)
